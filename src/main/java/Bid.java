@@ -83,6 +83,44 @@ public class Bid implements Comparable<Bid> {
 
     }
 
+    public static boolean isValidBidString(String bidString) {
+        String passCheck = bidString.toUpperCase();
+        if (passCheck.equals("P") || passCheck.equals("PASS")) {
+            return true;
+        } else if (bidString.length() < 2 || bidString.length() > 3) {
+            return false;
+        } else if (!Character.isDigit(bidString.charAt(0)) ||
+                Character.isDigit(bidString.charAt(0)) && Character.isDigit(bidString.charAt(1))) {
+            return false;
+        }
+
+        //valid number
+        int bidNumber = Integer.parseInt(bidString.substring(0, 1));
+        if (bidNumber < 1 || bidNumber > 7) {
+            return false;
+        }
+
+        //valid bid number
+        if (bidString.length() == 3) {
+            if (bidString.substring(1).toUpperCase().equals("NT")) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            char suitSymbol = Character.toUpperCase(bidString.charAt(1));
+            switch (suitSymbol) {
+                case 'C':
+                case 'D':
+                case 'H':
+                case 'S':
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
+
     public int compareTo(Bid otherBid) {
         if (this.number != otherBid.number) {
             return this.number - otherBid.number;

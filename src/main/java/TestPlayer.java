@@ -4,8 +4,8 @@ public class TestPlayer extends Player {
 
     private Scanner s = new Scanner(System.in);
 
-    public TestPlayer(String name) {
-        super(name);
+    public TestPlayer(String name, PlayerState playerState) {
+        super(name, playerState);
     }
 
     Bid getBid() {
@@ -22,8 +22,24 @@ public class TestPlayer extends Player {
         return partnerCard;
     }
 
-    Card getNextCard() {
-        return this.hand.get(0);
+    Card getFirstCard(boolean trumpBroken, char trumpSuit) {
+        if (!trumpBroken) {
+            for (Card card : this.getHand()) {
+                if (card.getSuit() != trumpSuit) {
+                    return card;
+                }
+            }
+        }
+        return this.getHand().get(0);
+    }
+
+    Card getNextCard(char firstSuit, char trumpSuit) {
+        for (Card card : this.getHand()) {
+            if (card.getSuit() == firstSuit) {
+                return card;
+            }
+        }
+        return this.getHand().get(0);
     }
 
 }

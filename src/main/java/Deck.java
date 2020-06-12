@@ -64,6 +64,10 @@ class Deck {
         }
     }
 
+    public boolean isEmpty() {
+        return index >= 52;
+    }
+
     public static void main(String[] args) {
         //Deck.init().printInOrder();
         Deck deck = Deck.init();

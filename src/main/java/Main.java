@@ -1,20 +1,26 @@
-import org.telegram.telegrambots.meta.api.objects.games.Game;
+import org.telegram.telegrambots.ApiContextInitializer;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        Player[] players = new Player[4];
+        ApiContextInitializer.init();
 
-        for (int i = 0; i < 4; i++) {
-            players[i] = new TestPlayer("TestPlayer " + (i + 1));
+        TelegramBotsApi botsApi = new TelegramBotsApi();
+
+        ClientEngineMediator mediator = new TeleEngineMediatorImpl();
+        BridgeBot bot = new BridgeBot(mediator);
+        mediator.setIOInterface(bot);
+
+        try {
+            botsApi.registerBot(bot);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
 
-        GameCoordinator newGame = new GameCoordinator(players);
-        Pair<Player, Player> pair = newGame.startGame();
-
-        System.out.println("Player " + pair.first + " and " + pair.second + " are your winners!");
-
     }
+
 
 }

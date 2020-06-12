@@ -18,18 +18,38 @@ class Card {
     }
 
     public String toString() {
+        String emoji;
+        switch (symbol) {
+            case 'S':
+                emoji = "♠";
+                break;
+            case 'H':
+                emoji = "♥";
+                break;
+            case 'D':
+                emoji = "♦";
+                break;
+            default:
+                emoji = "♣";
+        }
+        String cardString;
         switch (this.number) {
             case 1:
-                return symbol + ": A";
+                cardString = emoji + "A";
+                break;
             case 11:
-                return symbol + ": J";
+                cardString = emoji + "J";
+                break;
             case 12:
-                return symbol + ": Q";
+                cardString = emoji + "Q";
+                break;
             case 13:
-                return symbol + ": K";
+                cardString = emoji + "K";
+                break;
             default:
-                return symbol + ": " + this.number;
+                cardString = emoji + this.number;
         }
+        return String.format("[ %s ]", cardString);
     }
 
     public char getSuit() {
@@ -88,6 +108,28 @@ class Card {
             throw new IllegalCardException(cardString);
         } else {
             return new Card(symbol, number);
+        }
+    }
+
+    public static boolean isValidCardString(String cardString) {
+        char symbol = Character.toUpperCase(cardString.charAt(0));
+        char secondSymbol = Character.toUpperCase(cardString.charAt(1));
+        String remainderString = cardString.substring(1);
+        int number;
+        if (cardString.length() == 0 || cardString.length() > 3){
+            return false;
+        } else if (symbol != 'S' && symbol != 'C' && symbol != 'D' && symbol != 'H') {
+            return false;
+        } else if (cardString.length() == 2 && (secondSymbol == 'A' || secondSymbol == 'J' ||
+                secondSymbol == 'Q' || secondSymbol == 'K')) {
+            return true;
+        } else if (!(Character.isDigit(secondSymbol) &&
+                (cardString.length() != 3 || Character.isDigit(cardString.charAt(2))))) {
+            return false;
+        } else if ((number = Integer.parseInt(remainderString)) > 13 || number < 1) {
+            return false;
+        } else {
+            return true;
         }
     }
 
