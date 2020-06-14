@@ -10,10 +10,12 @@ public class IndexUpdate {
 
     private int index;
     private String message;
+    private UpdateType updateType;
 
-    public IndexUpdate(int index, String message) {
+    public IndexUpdate(int index, String message, UpdateType updateType) {
         this.index = index;
         this.message = message;
+        this.updateType = updateType;
     }
 
     public int getIndex() {
@@ -24,8 +26,12 @@ public class IndexUpdate {
         return this.message;
     }
 
+    public UpdateType getUpdateType() {
+        return this.updateType;
+    }
+
     public String toString() {
-        return "(" + getIndex() + ": " + getMessage() + ")";
+        return getIndex() + ": " + getMessage() + " Type: " + getUpdateType();
     }
 
 }

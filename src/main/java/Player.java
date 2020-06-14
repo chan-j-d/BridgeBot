@@ -8,6 +8,7 @@ public abstract class Player {
         this.playerState = playerState;
     }
 
+    public String getName() { return this.name; }
     public CardCollection getHand() {
         return this.playerState.getHand();
     }

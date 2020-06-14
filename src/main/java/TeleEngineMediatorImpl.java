@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class TeleEngineMediatorImpl implements ClientEngineMediator {
@@ -14,9 +16,10 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     In the ArrayList for players,
         index 0: player hand
         index 1: player individual update
-        index 2: invalid submission
     */
-    private HashMap<Long, ArrayList<Integer>> chatToMessageIds;
+    private HashMap<Long, List<Integer>> chatToMessageIds;
+    private static int HAND = 0;
+    private static int UPDATE = 1;
 
     private IOInterface ioInterface;
     private HashMap<Long, TelegramPlayer> chatIdToPlayerMap;
@@ -26,6 +29,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         this.gameEngines = new HashMap<>();
         this.playerToGroupIds = new HashMap<>();
         this.chatIdToPlayerMap = new HashMap<>();
+        this.chatToMessageIds = new HashMap<>();
     }
 
     @Override
@@ -33,10 +37,14 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         gameIds.put(chatIds.getChatId(0), chatIds);
         long groupId = chatIds.getChatId(0);
         GameEngine gameEngine = GameEngine.init(groupId);
-        for (int i = 1; i < 5; i++) {
-            long playerId = chatIds.getChatId(i);
-            playerToGroupIds.put(playerId, groupId);
-            chatIdToPlayerMap.put(playerId, new TelegramPlayer(chatIds.getName(i), gameEngine.getPlayerState(i)));
+        for (int i = 0; i < 5; i++) {
+            long chatId = chatIds.getChatId(i);
+            chatToMessageIds.put(chatId, Arrays.asList(new Integer[] {0, 0}));
+            if (i == 0) {
+                continue;
+            }
+            playerToGroupIds.put(chatId, groupId);
+            chatIdToPlayerMap.put(chatId, new TelegramPlayer(chatIds.getName(i), gameEngine.getPlayerState(i)));
         }
         gameEngines.put(groupId, gameEngine);
         GameUpdate firstUpdate = gameEngine.startBid();
@@ -91,10 +99,54 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     @Override
     public void broadcastUpdateFromEngine(GameEngine engine, GameUpdate update) {
         long chatId = engine.getChatId();
+        System.out.println(update);
+        System.out.println(chatToMessageIds);
         for (IndexUpdate indexUpdate : update) {
-            ioInterface.sendMessageToId(
-                    getUserId(chatId, indexUpdate.getIndex()),
-                    indexUpdate.getMessage());
+            String text = stringEditing(chatId, indexUpdate.getMessage());
+            UpdateType updateType = indexUpdate.getUpdateType();
+            long userId = getUserId(chatId, indexUpdate.getIndex());
+            System.out.println(userId);
+            switch (updateType) {
+                case SEND:
+                    ioInterface.sendMessageToId(userId, text);
+                    break;
+                case EDIT_HAND:
+                    ioInterface.editMessage(userId,
+                            chatToMessageIds.get(userId).get(HAND),
+                            text);
+                    break;
+                case EDIT_UPDATE:
+                    ioInterface.editMessage(userId,
+                            chatToMessageIds.get(userId).get(UPDATE),
+                            text);
+                    break;
+                case SEND_HAND:
+                case SEND_UPDATE:
+                    int messageId = ioInterface.sendMessageToId(userId, text);
+                    updateMessageIds(userId, messageId, updateType);
+                    break;
+
+            }
+        }
+    }
+
+    private String stringEditing(long chatId, String string) {
+        String currentString = string;
+        for (int i = 1; i < 5; i++) {
+            String playerName = chatIdToPlayerMap.get(getUserId(chatId, i)).getName();
+            currentString = String.join(playerName, currentString.split("P" + i));
+        }
+        return currentString;
+    }
+
+    private void updateMessageIds(long chatId, int messageId, UpdateType updateType) {
+        System.out.println("message id: " + messageId);
+        if (updateType == UpdateType.SEND_HAND) {
+            System.out.println("Before update: " + chatToMessageIds);
+            chatToMessageIds.get(chatId).set(0, messageId);
+            System.out.println("After update: " + chatToMessageIds);
+        } else if (updateType == UpdateType.SEND_UPDATE) {
+            chatToMessageIds.get(chatId).set(1, messageId);
         }
     }
 

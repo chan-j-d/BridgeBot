@@ -44,6 +44,7 @@ public class GameEngine implements Engine {
         this.trickFirstCard = true;
         this.turnCycle = 1;
         this.gameOver = false;
+        this.currentTrick = new CardCollection();
     }
 
     public static GameEngine init(long chatId) {
@@ -72,9 +73,7 @@ public class GameEngine implements Engine {
 
         //Assigning hands to playerStates
         for (int i = 1; i < 5; i++) {
-            System.out.println(hands[i - 1]);
             hands[i - 1].sort(new BridgeStandardComparator());
-            System.out.println(hands[i - 1]);
             engine.players[i].setHand(hands[i - 1]);
         }
 
@@ -84,7 +83,7 @@ public class GameEngine implements Engine {
     public GameUpdate startBid() {
         GameUpdate update = bidCoordinator.startBid();
         for (int i = 1; i < 5; i++) {
-            update.add(createPlayerHandUpdate(i));
+            update.add(IndexUpdateGenerator.createPlayerHandInitialUpdate(i, players[i].getHand()));
         }
         return update;
     }
@@ -116,13 +115,17 @@ public class GameEngine implements Engine {
         }
 
         if (playerHasCard(bidWinner, card)) {
-            update.add(createPartnerCardRequest());
+            update.add(IndexUpdateGenerator.createInvalidCardUpdate(bidWinner,
+                    "You cannot choose a card you have!"));
+            update.add(IndexUpdateGenerator.createPartnerCardRequest(bidWinner));
         } else {
             partnerCard = card;
             processPartners(card);
             currentPlayer = getFirstPlayer();
-            update.add(createPlayerCardRequest(currentPlayer));
-            update.add(createPartnerCardAnnouncement(card, currentPlayer));
+            update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
+            update.add(IndexUpdateGenerator.createPartnerGroupUpdate(card));
+            update.add(IndexUpdateGenerator.createTrickStartUpdate(currentPlayer));
+            update.add(IndexUpdateGenerator.createCurrentTrickInitialUpdate(currentTrick));
         }
 
         return update;
@@ -168,11 +171,13 @@ public class GameEngine implements Engine {
 
         GameUpdate update = new GameUpdate();
         IndexUpdate trickUpdate = null;
-        System.out.println("isValidCard: " + isValidCard(card));
 
         //checks if the player has the card and the card played is valid for that turn
         if (isValidCard(card)) {
             Card cardPlayed = players[currentPlayer].playCard(card);
+            IndexUpdate cardPlayedHandUpdate = IndexUpdateGenerator.createPlayerHandUpdate(
+                    currentPlayer,
+                    players[currentPlayer].getHand());
             if (trickFirstCard) {
                 currentTrick = new CardCollection();
                 trickFirstCard = false;
@@ -191,19 +196,22 @@ public class GameEngine implements Engine {
             if (card.getSuit() == trumpSuit && !brokenTrump) {
                 brokenTrump = true;
             }
-            IndexUpdate cardUpdate = createCardPlayedUpdate(currentPlayer, cardPlayed);
+            IndexUpdate cardGroupUpdate = IndexUpdateGenerator.createCardGroupUpdate(currentPlayer, cardPlayed);
+            IndexUpdate trickGroupUpdate = IndexUpdateGenerator.createCurrentTrickUpdate(currentTrick);
 
             //Check if it is the final card of the set. If it is, we reset the trick and increase the turnCycle.
             if (currentTrick.size() == 4) {
                 players[trickHighestPlayer].addTrick(currentTrick);
                 trickFirstCard = true;
 
-                trickUpdate = createTrickWinnerUpdate(trickHighestPlayer, turnCycle++);
+                trickUpdate = IndexUpdateGenerator.createTrickGroupUpdate(trickHighestPlayer, turnCycle++);
 
                 //check if game has concluded
                 if (checkWin(trickHighestPlayer)) {
-                    update.add(cardUpdate);
-                    update.add(createWinnerUpdate(trickHighestPlayer, getPartnerOf(trickHighestPlayer)));
+                    update.add(cardGroupUpdate);
+                    update.add(IndexUpdateGenerator.createWinnerGroupUpdate(trickHighestPlayer,
+                            getPartnerOf(trickHighestPlayer)));
+                    update.add(trickGroupUpdate);
                     gameOver = true;
                     return update;
                 }
@@ -213,8 +221,10 @@ public class GameEngine implements Engine {
                 //update player number
                 currentPlayer = currentPlayer == 4 ? 1 : currentPlayer + 1;
             }
-            update.add(createPlayerCardRequest(currentPlayer));
-            update.add(cardUpdate);
+            update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
+            update.add(cardPlayedHandUpdate);
+            update.add(cardGroupUpdate);
+            update.add(trickGroupUpdate);
 
             if (currentTrick.size() == 4) {
                 update.add(trickUpdate);
@@ -222,7 +232,8 @@ public class GameEngine implements Engine {
 
         //Otherwise, we request another card
         } else {
-            update.add(createPlayerCardRequest(currentPlayer));
+            update.add(IndexUpdateGenerator.createInvalidCardUpdate(currentPlayer, getInvalidReason(card)));
+            update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
         }
 
 
@@ -235,23 +246,25 @@ public class GameEngine implements Engine {
 
     public boolean isValidCard(Card card) {
         PlayerState state = players[currentPlayer];
-        System.out.println("Before: " + card);
         if (!state.containsCard(card)) {
-            System.out.println("First: " + card);
             return false;
         } else if (trickFirstCard) {
-            System.out.println("Second: " + card);
-            System.out.println("Second followup: " + !(card.getSuit() == trumpSuit && !brokenTrump) +
-                    "\n" + state.containsOnlySuit(trumpSuit));
-            System.out.println("BrokenTrump: " + brokenTrump);
             return !(card.getSuit() == trumpSuit && !brokenTrump) || state.containsOnlySuit(trumpSuit);
         } else if (firstCardSuit != card.getSuit()) {
-            System.out.println("Third: " + card);
             return !state.containsSuit(firstCardSuit);
         }
-        System.out.println("Fourth: " + card);
-
         return true;
+    }
+
+    public String getInvalidReason(Card card) {
+        PlayerState state = players[currentPlayer];
+        if (!state.containsCard(card)) {
+            return "You do not have " + card;
+        } else if (trickFirstCard) {
+            return "Trump has not yet been broken! You cannot start a trick with a trump suit!";
+        } else {
+            return "You still have cards of the same suit as the current trick. You must play one of them!";
+        }
     }
 
 
@@ -325,39 +338,8 @@ public class GameEngine implements Engine {
         return partners.player1 == player ? partners.player2 : partners.player1;
     }
 
-    private IndexUpdate createPlayerCardRequest(int player) {
-        return new IndexUpdate(player, "Your turn to play a card");
-    }
-
-    private IndexUpdate createPartnerCardRequest() {
-        return new IndexUpdate(bidWinner, "Please choose a partner card that does not belong to you");
-    }
-
-    private IndexUpdate createCardPlayedUpdate(int player, Card card) {
-        return new IndexUpdate(0, player + " plays " + card);
-    }
-
-    private IndexUpdate createWinnerUpdate(int player1, int player2) {
-        int firstPlayer = player1 < player2 ? player1 : player2;
-        int secondPlayer = player1 > player2 ? player1 : player2;
-        return new IndexUpdate(0, "Partners " + firstPlayer + " and " + secondPlayer + " are your winners!");
-    }
-
     private boolean playerHasCard(int player, Card card) {
         return players[player].containsCard(card);
-    }
-
-    private IndexUpdate createTrickWinnerUpdate(int player, int turnNumber) {
-        return new IndexUpdate(0, player + " wins trick " + turnNumber);
-    }
-
-    private IndexUpdate createPartnerCardAnnouncement(Card card, int firstPlayer) {
-        return new IndexUpdate(0, "The partner card chosen is " +
-                card + "\n" + firstPlayer + " goes first");
-    }
-
-    private IndexUpdate createPlayerHandUpdate(int player) {
-        return new IndexUpdate(player, "Your hand: \n" + players[player].getHand());
     }
 
     @Override

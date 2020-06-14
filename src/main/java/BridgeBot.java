@@ -26,7 +26,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     );
 
     public void onUpdateReceived(Update update) {
-        System.out.println(update);
         boolean groupChat = update.getMessage().getChat().isGroupChat();
         if (groupChat) {
             String text = update.getMessage().getText();
@@ -68,7 +67,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     public void startGameRequest(Update update) {
         long chatId = update.getMessage().getChatId();
-        System.out.println(groupChatIds);
         if (groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "Game already started!");
         } else {
@@ -132,6 +130,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     public void editMessage(long chatId, int messageId, String newText) {
+        System.out.println("BridgeBot editMessage: " + chatId + " " + messageId + " " + newText);
         EditMessageText edit = new EditMessageText()
                 .setChatId(chatId)
                 .setMessageId(messageId)

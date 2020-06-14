@@ -28,12 +28,8 @@ public class BidCoordinator {
         currentHighestBidder = 0;
 
         GameUpdate update = new GameUpdate();
-        IndexUpdate indexUpdate = createPlayerBidRequest(currentPlayer);
-
-        IndexUpdate indexUpdate2 = new IndexUpdate(0,
-                "Bid starting!\nPlayer " + currentPlayer + " starts the bid!");
-        update.add(indexUpdate);
-        update.add(indexUpdate2);
+        update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
+        update.add(IndexUpdateGenerator.createBidGroupInitialUpdate(currentPlayer));
         return update;
     }
 
@@ -49,34 +45,35 @@ public class BidCoordinator {
             if (currentHighestBidder == 0 || newBid.compareTo(currentHighestBid) > 0) {
                 currentHighestBidder = currentPlayer;
                 currentHighestBid = newBid;
-                IndexUpdate update1 = createPlayerBidUpdate(currentPlayer++, newBid);
+                IndexUpdate update1 = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
                 if (currentPlayer == 5) currentPlayer = 1;
-                IndexUpdate update2 = createPlayerBidRequest(currentPlayer);
+                IndexUpdate update2 = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer);
                 update.add(update2);
                 update.add(update1);
             } else {
-                update.add(createInvalidBidUpdate(currentPlayer));
+                update.add(IndexUpdateGenerator.createInvalidBidUpdate(currentPlayer,
+                        "Please bid something greater!"));
             }
             prevPass = false;
             twoPrevPass = false;
             threePrevPass = false;
 
         } else {
-            IndexUpdate update1 = createPlayerBidUpdate(currentPlayer++, newBid);
+            IndexUpdate update1 = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
             if (currentPlayer == 5) currentPlayer = 1;
             if (!prevPass) {
                 prevPass = true;
-                update.add(createPlayerBidRequest(currentPlayer));
+                update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
                 update.add(update1);
             } else if (!twoPrevPass) {
                 twoPrevPass = true;
-                update.add(createPlayerBidRequest(currentPlayer));
+                update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
                 update.add(update1);
             } else if (!threePrevPass) {
                 threePrevPass = true;
-                update.add(createPartnerCardRequest(currentHighestBidder));
+                update.add(IndexUpdateGenerator.createPartnerCardRequest(currentHighestBidder));
                 update.add(update1);
-                update.add(createPlayerBidWonUpdate(currentHighestBidder, currentHighestBid));
+                update.add(IndexUpdateGenerator.createBidWonUpdate(currentHighestBidder, currentHighestBid));
             }
         }
 
@@ -93,26 +90,6 @@ public class BidCoordinator {
             throw new IllegalStateException("bidding has not concluded!");
         }
         return new Pair<>(currentHighestBid, currentHighestBidder);
-    }
-
-    private IndexUpdate createPlayerBidUpdate(int player, Bid bid) {
-        return new IndexUpdate(0, player + " bids " + bid);
-    }
-
-    private IndexUpdate createInvalidBidUpdate(int player) {
-        return new IndexUpdate(player, "The bid by " + player + " was invalid, please try again.");
-    }
-
-    private IndexUpdate createPlayerBidRequest(int player) {
-        return new IndexUpdate(player, "Please make a bid in this chat");
-    }
-
-    private IndexUpdate createPlayerBidWonUpdate(int player, Bid bid) {
-        return new IndexUpdate(0, player + " wins with a bid of " + bid);
-    }
-
-    private IndexUpdate createPartnerCardRequest(int player) {
-        return new IndexUpdate(player, "Please choose a partner card");
     }
 
 /*
