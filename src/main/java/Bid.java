@@ -144,12 +144,28 @@ public class Bid implements Comparable<Bid> {
     }
 
     public String toString() {
+        String symbol = "";
         if (this.suit == 'P') {
             return "PASS";
         } else if (this.suit == 'N') {
-            return this.number + "NT";
+            symbol = "NT";
+        } else {
+            switch (this.suit) {
+                case 'S':
+                    symbol = "♠";
+                    break;
+                case 'H':
+                    symbol = "♥";
+                    break;
+                case 'D':
+                    symbol = "♦";
+                    break;
+                case 'C':
+                    symbol = "♣";
+                    break;
+            }
         }
-        return this.number + "" + this.suit;
+        return this.number + symbol;
     }
 
     public static void main(String[] args) {

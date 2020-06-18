@@ -1,7 +1,7 @@
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -21,9 +21,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     private HashMap<Long, GameChatIds> groupChatIds = new HashMap<>();
     private HashMap<Long, Pair<Integer, String>> startGameMessageId = new HashMap<>();
 
-    private static List<String> validCommands = Arrays.asList(
-            new String[] {"startgame", "joingame"}
-    );
+    private static List<String> validCommands = Arrays.asList("startgame", "joingame");
 
     public void onUpdateReceived(Update update) {
         boolean groupChat = update.getMessage().getChat().isGroupChat();
@@ -101,7 +99,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             } else {
                 String firstName = update.getMessage().getFrom().getFirstName();
                 gameChatIds.addUserIdAndName(userId, firstName);
-                sendMessageToId(chatId, firstName + " has joined the game!");
+                sendMessageToId(chatId, "*" + firstName + "* has joined the game!");
                 sendMessageToId(userId, "You have joined the game!");
                 int messageIdToUpdate = startGameMessageId.get(chatId).first;
                 String stringToEdit  = startGameMessageId.get(chatId).second + "\n" + firstName;
@@ -120,7 +118,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     public int sendMessageToId(long chatId, String text) {
         SendMessage message = new SendMessage()
                 .setChatId(chatId)
-                .setText(text);
+                .setText(text)
+                .enableMarkdown(true);
         try {
             return execute(message).getMessageId();
         } catch (TelegramApiException e) {
@@ -130,13 +129,24 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     public void editMessage(long chatId, int messageId, String newText) {
-        System.out.println("BridgeBot editMessage: " + chatId + " " + messageId + " " + newText);
         EditMessageText edit = new EditMessageText()
                 .setChatId(chatId)
                 .setMessageId(messageId)
-                .setText(newText);
+                .setText(newText)
+                .enableMarkdown(true);
         try {
             execute(edit);
+        } catch (TelegramApiException e) {
+            System.err.println(e);
+        }
+    }
+
+    public void deleteMessage(long chatId, int messageId) {
+        DeleteMessage delete = new DeleteMessage()
+                .setChatId(chatId)
+                .setMessageId(messageId);
+        try {
+            execute(delete);
         } catch (TelegramApiException e) {
             System.err.println(e);
         }

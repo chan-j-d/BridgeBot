@@ -34,4 +34,8 @@ public class IndexUpdate {
         return getIndex() + ": " + getMessage() + " Type: " + getUpdateType();
     }
 
+    protected IndexUpdate editString(String message) {
+        return new IndexUpdate(this.index, message, this.updateType);
+    }
+
 }

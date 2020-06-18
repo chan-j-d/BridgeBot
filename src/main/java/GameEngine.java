@@ -1,10 +1,6 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-
 public class GameEngine implements Engine {
 
-    private int STARTING_PLAYER = 1;
+    private static int STARTING_PLAYER = 1;
 
     private long chatId;
 
@@ -82,7 +78,11 @@ public class GameEngine implements Engine {
 
     public GameUpdate startBid() {
         GameUpdate update = bidCoordinator.startBid();
+        int firstPlayer = update.get(0).getIndex();
+        update.add(0, IndexUpdateGenerator
+                .createPlayerHandInitialUpdate(firstPlayer, players[firstPlayer].getHand()));
         for (int i = 1; i < 5; i++) {
+            if (i == firstPlayer) continue;
             update.add(IndexUpdateGenerator.createPlayerHandInitialUpdate(i, players[i].getHand()));
         }
         return update;
@@ -117,15 +117,15 @@ public class GameEngine implements Engine {
         if (playerHasCard(bidWinner, card)) {
             update.add(IndexUpdateGenerator.createInvalidCardUpdate(bidWinner,
                     "You cannot choose a card you have!"));
-            update.add(IndexUpdateGenerator.createPartnerCardRequest(bidWinner));
         } else {
             partnerCard = card;
             processPartners(card);
             currentPlayer = getFirstPlayer();
             update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
-            update.add(IndexUpdateGenerator.createPartnerGroupUpdate(card));
-            update.add(IndexUpdateGenerator.createTrickStartUpdate(currentPlayer));
-            update.add(IndexUpdateGenerator.createCurrentTrickInitialUpdate(currentTrick));
+            update.add(IndexUpdateGenerator.createPartnerGroupUpdate(card, currentPlayer));
+            update.add(IndexUpdateGenerator.createPartnerCardAcknowledgement(bidWinner, card));
+            update.add(IndexUpdateGenerator.createTrickCountUpdate(new int[] {0, 0, 0, 0}));
+            update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
         }
 
         return update;
@@ -170,14 +170,18 @@ public class GameEngine implements Engine {
     private GameUpdate processCardPlayed(Card card) {
 
         GameUpdate update = new GameUpdate();
-        IndexUpdate trickUpdate = null;
+        IndexUpdate trickUpdate;
 
         //checks if the player has the card and the card played is valid for that turn
         if (isValidCard(card)) {
             Card cardPlayed = players[currentPlayer].playCard(card);
-            IndexUpdate cardPlayedHandUpdate = IndexUpdateGenerator.createPlayerHandUpdate(
+            update.add(IndexUpdateGenerator.createPlayerHandUpdate(
                     currentPlayer,
-                    players[currentPlayer].getHand());
+                    players[currentPlayer].getHand()));
+            update.add(IndexUpdateGenerator.createPlayerCardAcknowledgement(
+                    currentPlayer,
+                    cardPlayed));
+
             if (trickFirstCard) {
                 currentTrick = new CardCollection();
                 trickFirstCard = false;
@@ -185,6 +189,7 @@ public class GameEngine implements Engine {
                 turnComparator = new BridgeTrumpComparator(trumpSuit, firstCardSuit);
                 trickHighestPlayer = currentPlayer;
                 trickHighestCard = card;
+
             } else {
                 if (turnComparator.compare(cardPlayed, trickHighestCard) > 0) {
                     trickHighestCard = cardPlayed;
@@ -196,22 +201,26 @@ public class GameEngine implements Engine {
             if (card.getSuit() == trumpSuit && !brokenTrump) {
                 brokenTrump = true;
             }
-            IndexUpdate cardGroupUpdate = IndexUpdateGenerator.createCardGroupUpdate(currentPlayer, cardPlayed);
-            IndexUpdate trickGroupUpdate = IndexUpdateGenerator.createCurrentTrickUpdate(currentTrick);
+
+            update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
 
             //Check if it is the final card of the set. If it is, we reset the trick and increase the turnCycle.
             if (currentTrick.size() == 4) {
+
                 players[trickHighestPlayer].addTrick(currentTrick);
+                update.add(IndexUpdateGenerator.createTrickCountUpdate(getGameState()));
+
                 trickFirstCard = true;
 
-                trickUpdate = IndexUpdateGenerator.createTrickGroupUpdate(trickHighestPlayer, turnCycle++);
+                trickUpdate = IndexUpdateGenerator.createTrickGroupUpdate(currentPlayer,
+                        cardPlayed, trickHighestPlayer, turnCycle++);
+
+                update.add(trickUpdate);
 
                 //check if game has concluded
                 if (checkWin(trickHighestPlayer)) {
-                    update.add(cardGroupUpdate);
                     update.add(IndexUpdateGenerator.createWinnerGroupUpdate(trickHighestPlayer,
                             getPartnerOf(trickHighestPlayer)));
-                    update.add(trickGroupUpdate);
                     gameOver = true;
                     return update;
                 }
@@ -219,21 +228,14 @@ public class GameEngine implements Engine {
 
             } else {
                 //update player number
+                update.add(IndexUpdateGenerator.createCardGroupUpdate(currentPlayer, cardPlayed));
                 currentPlayer = currentPlayer == 4 ? 1 : currentPlayer + 1;
             }
-            update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
-            update.add(cardPlayedHandUpdate);
-            update.add(cardGroupUpdate);
-            update.add(trickGroupUpdate);
-
-            if (currentTrick.size() == 4) {
-                update.add(trickUpdate);
-            }
+            update.add(0, IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
 
         //Otherwise, we request another card
         } else {
             update.add(IndexUpdateGenerator.createInvalidCardUpdate(currentPlayer, getInvalidReason(card)));
-            update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
         }
 
 
@@ -275,15 +277,15 @@ public class GameEngine implements Engine {
         return winningPartner.winCheck();
     }
 
-    protected String getGameState() {
-        StringBuilder builder = new StringBuilder();
+    protected int[] getGameState() {
 
-        for (int i = 1; i < 5; i++) {
-            PlayerState player = players[i];
-            builder.append(player.toString() + " has " + player.countTricks() + " tricks\n");
+        int[] trickCount = new int[4];
+
+        for (int i = 0; i < 4; i++) {
+            trickCount[i] = players[i + 1].countTricks();
         }
 
-        return builder.toString();
+        return trickCount;
     }
 
     private class Partners {

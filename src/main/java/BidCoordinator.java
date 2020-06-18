@@ -5,9 +5,7 @@ public class BidCoordinator {
 
     private int currentPlayer;
 
-    private boolean prevPass;
-    private boolean twoPrevPass;
-    private boolean threePrevPass;
+    private int consecutivePasses;
 
     private int currentHighestBidder;
     private Bid currentHighestBid;
@@ -21,9 +19,7 @@ public class BidCoordinator {
     public GameUpdate startBid() {
 
         //Setting the bid states to the default state
-        prevPass = false;
-        twoPrevPass = false;
-        threePrevPass = false;
+        consecutivePasses = 0;
         currentHighestBid = null;
         currentHighestBidder = 0;
 
@@ -45,35 +41,45 @@ public class BidCoordinator {
             if (currentHighestBidder == 0 || newBid.compareTo(currentHighestBid) > 0) {
                 currentHighestBidder = currentPlayer;
                 currentHighestBid = newBid;
-                IndexUpdate update1 = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
+                IndexUpdate groupBidEdit = IndexUpdateGenerator.createBidGroupEdit(currentPlayer,
+                        newBid,
+                        consecutivePasses = 0);
+                IndexUpdate playerBidAcknowledge = IndexUpdateGenerator.createPlayerBidAcknowledgement(
+                        currentPlayer, newBid);
+                IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
                 if (currentPlayer == 5) currentPlayer = 1;
-                IndexUpdate update2 = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer);
-                update.add(update2);
-                update.add(update1);
+                IndexUpdate bidRequest = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer);
+                update.add(bidRequest);
+                update.add(playerBidAcknowledge);
+                update.add(groupBidEdit);
+                update.add(groupUpdate);
             } else {
                 update.add(IndexUpdateGenerator.createInvalidBidUpdate(currentPlayer,
-                        "Please bid something greater!"));
+                        "Please bid something bigger!"));
             }
-            prevPass = false;
-            twoPrevPass = false;
-            threePrevPass = false;
 
         } else {
-            IndexUpdate update1 = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
+            IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer, newBid);
+            IndexUpdate playerBidAcknowledge = IndexUpdateGenerator.createPlayerBidAcknowledgement(
+                    currentPlayer++, newBid);
             if (currentPlayer == 5) currentPlayer = 1;
-            if (!prevPass) {
-                prevPass = true;
+            if (++consecutivePasses < 3 || currentHighestBidder == 0) {
                 update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
-                update.add(update1);
-            } else if (!twoPrevPass) {
-                twoPrevPass = true;
-                update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
-                update.add(update1);
-            } else if (!threePrevPass) {
-                threePrevPass = true;
+                if (currentHighestBidder == 0) {
+                    update.add(IndexUpdateGenerator.createNoBidEdit());
+                } else {
+                    update.add(IndexUpdateGenerator.createBidGroupEdit(
+                            currentHighestBidder, currentHighestBid, consecutivePasses));
+                }
+                update.add(playerBidAcknowledge);
+                update.add(groupUpdate);
+            } else {
                 update.add(IndexUpdateGenerator.createPartnerCardRequest(currentHighestBidder));
-                update.add(update1);
-                update.add(IndexUpdateGenerator.createBidWonUpdate(currentHighestBidder, currentHighestBid));
+                update.add(playerBidAcknowledge);
+                update.add(IndexUpdateGenerator.createBidWonEdit(currentHighestBidder, currentHighestBid));
+                update.add(IndexUpdateGenerator.createBidWonUpdate(currentPlayer,
+                        currentHighestBidder,
+                        currentHighestBid));
             }
         }
 
@@ -82,7 +88,7 @@ public class BidCoordinator {
     }
 
     public boolean biddingInProgress() {
-        return !threePrevPass || currentHighestBidder == 0;
+        return consecutivePasses < 3 || currentHighestBidder == 0;
     }
 
     public Pair<Bid, Integer> getWinningBid() {
