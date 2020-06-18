@@ -157,7 +157,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     public String getBotToken() {
-        return "1293154216:AAHjpKZgt_jtVVnD_cN2j1xl0Zre2pLr6Eo";
+        return "";
     }
 
 
