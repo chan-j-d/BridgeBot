@@ -1,3 +1,6 @@
+import java.util.Arrays;
+import java.util.List;
+
 public class BridgeUserInterface implements ViewerInterface {
 
     private IOInterface ioInterface;
@@ -7,7 +10,9 @@ public class BridgeUserInterface implements ViewerInterface {
     private int updateId;
     private int errorId;
 
-    private String hand;
+    private static final int NUM_HIGHER_BIDS = 5;
+
+    private String[][] hand;
 
     private boolean errorShown;
     private String request;
@@ -24,7 +29,7 @@ public class BridgeUserInterface implements ViewerInterface {
     }
 
     public String toString() {
-        return String.format("*Hand*: %s", this.hand);
+        return "*Hands*: ";
     }
 
     public void processUpdate(IndexUpdate update) {
@@ -40,12 +45,12 @@ public class BridgeUserInterface implements ViewerInterface {
         }
         switch (updateType) {
             case SEND_HAND:
-                this.hand = message;
-                messageId = ioInterface.sendMessageToId(playerId, this.toString());
+                this.hand = processHand(message);
+                messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
                 break;
             case EDIT_HAND:
-                this.hand = message;
-                ioInterface.editMessage(playerId, messageId, this.toString());
+                this.hand = processHand(message);
+                ioInterface.editMessageButtons(playerId, messageId, this.hand);
                 break;
             case SEND_UPDATE:
                 if (updateId != -1) {
@@ -58,6 +63,13 @@ public class BridgeUserInterface implements ViewerInterface {
                 request = message;
                 requestId = ioInterface.sendMessageToId(playerId, "*Request*: " + message);
                 break;
+            case SEND_BID_REQUEST:
+                requesting = true;
+                request = message;
+                requestId = ioInterface.sendMessageWithButtons(playerId,
+                        "*Request*: " + message,
+                        createBidOffers(update));
+                break;
             case ERROR:
                 errorShown = true;
                 errorId = ioInterface.sendMessageToId(playerId, "*Error*: " + message);
@@ -67,6 +79,62 @@ public class BridgeUserInterface implements ViewerInterface {
         }
 
 
+    }
+
+    public String[][] processHand(String hand) {
+        String[] cards = hand.split(",[ ?]");
+        String[][] cardArray;
+        if (cards.length > 10) {
+            cardArray = new String[3][];
+        } else if (cards.length > 5) {
+            cardArray = new String[2][];
+        } else {
+            cardArray = new String[1][];
+        }
+
+        int row = 0;
+        int column = 0;
+        String[] cardRow = new String[5];
+        for (String card : cards) {
+            if (column == 5) {
+                column = 0;
+                cardArray[row++] = cardRow;
+                cardRow = new String[5];
+            }
+            cardRow[column++] = card;
+        }
+
+        cardArray[row] = cardRow;
+
+        return cardArray;
+
+    }
+
+    private String[][] createBidOffers(IndexUpdate update) {
+        Bid prevHighestBid = getPrevHighestBidFromUpdate(update);
+
+        String[] array = new String[NUM_HIGHER_BIDS];
+        for (int i = 0; i < NUM_HIGHER_BIDS; i++) {
+            prevHighestBid = Bid.nextHigherBid(prevHighestBid);
+            array[i] = prevHighestBid.toString();
+        }
+
+        return new String[][] {array, new String[] {"pass"}};
+
+    }
+
+    private Bid getPrevHighestBidFromUpdate(IndexUpdate update) {
+        String string = update.getMessage();
+        if (!string.contains("Previous highest")) {
+            return Bid.createPassBid();
+        } else {
+            int stringLength = string.length();
+            String bid = string.substring(stringLength - 2);
+            if (bid.toUpperCase().charAt(0) == 'N') {
+                bid = string.substring(stringLength - 3);
+            }
+            return Bid.createBid(bid);
+        }
     }
 
     public long getViewerId() {

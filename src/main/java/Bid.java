@@ -44,6 +44,10 @@ public class Bid implements Comparable<Bid> {
         }
     }
 
+    protected int getNumber() {
+        return this.number;
+    }
+
     public static Bid createBid(String bidString) {
         String passCheck = bidString.toUpperCase();
         if (passCheck.equals("P") || passCheck.equals("PASS")) {
@@ -70,6 +74,15 @@ public class Bid implements Comparable<Bid> {
             }
         } else {
             char suitSymbol = Character.toUpperCase(bidString.charAt(1));
+            if (suitSymbol == '♠') {
+                suitSymbol = 'S';
+            } else if (suitSymbol == '♥') {
+                suitSymbol = 'H';
+            } else if (suitSymbol == '♦') {
+                suitSymbol = 'D';
+            } else if (suitSymbol == '♣') {
+                suitSymbol = 'C';
+            }
             switch (suitSymbol) {
                 case 'C':
                 case 'D':
@@ -109,6 +122,15 @@ public class Bid implements Comparable<Bid> {
             }
         } else {
             char suitSymbol = Character.toUpperCase(bidString.charAt(1));
+            if (suitSymbol == '♠') {
+                suitSymbol = 'S';
+            } else if (suitSymbol == '♥') {
+                suitSymbol = 'H';
+            } else if (suitSymbol == '♦') {
+                suitSymbol = 'D';
+            } else if (suitSymbol == '♣') {
+                suitSymbol = 'C';
+            }
             switch (suitSymbol) {
                 case 'C':
                 case 'D':
@@ -166,6 +188,40 @@ public class Bid implements Comparable<Bid> {
             }
         }
         return this.number + symbol;
+    }
+
+    public static Bid nextHigherBid(Bid bid) {
+        char newSuit = '\0';
+        int number = -1;
+        if (bid.equals(createPassBid())) {
+            return new Bid(1, 'C');
+        } else if (bid.equals(new Bid(7, 'N'))) {
+            throw new IllegalStateException("7NT is the largest bid possible!");
+        } else {
+            switch (bid.getSuit()) {
+                case 'C':
+                    newSuit = 'D';
+                    number = bid.getNumber();
+                    break;
+                case 'D':
+                    newSuit = 'H';
+                    number = bid.getNumber();
+                    break;
+                case 'H':
+                    newSuit = 'S';
+                    number = bid.getNumber();
+                    break;
+                case 'S':
+                    newSuit = 'N';
+                    number = bid.getNumber();
+                    break;
+                case 'N':
+                    newSuit = 'C';
+                    number = bid.getNumber() + 1;
+                    break;
+            }
+            return new Bid(number, newSuit);
+        }
     }
 
     public static void main(String[] args) {

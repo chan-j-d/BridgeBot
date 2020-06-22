@@ -13,12 +13,15 @@ public class IndexUpdateGenerator {
 
     //Acknowledgement Update-type
     public static IndexUpdate createPlayerCardAcknowledgement(int player, Card card) {
-        return new IndexUpdate(player, "You played " + card + "!", UpdateType.SEND_UPDATE);
+        return new IndexUpdate(player, "You played " + card + " !", UpdateType.SEND_UPDATE);
     }
 
     //Request type for a partner card
     public static IndexUpdate createPartnerCardRequest(int bidWinner) {
-        return new IndexUpdate(bidWinner,"Choose a partner card!", UpdateType.SEND_REQUEST);
+        return new IndexUpdate(bidWinner,"Choose a partner card!" +
+                "\nPartner card should be in the form of OX: " +
+                "\n - O: Suit (S: spades, H: hearts, etc.)" +
+                "\n - X: Number (A: ace, K: king, Q: queen, etc.)", UpdateType.SEND_REQUEST);
     }
 
     //Update type for partner card acknowledgement
@@ -86,8 +89,13 @@ public class IndexUpdateGenerator {
     }
 
     //Send player private Request for bid
-    public static IndexUpdate createPlayerBidRequest(int player) {
-        return new IndexUpdate(player, "Make your bid in this chat!", UpdateType.SEND_REQUEST);
+    public static IndexUpdate createPlayerBidRequest(int player, Bid bid) {
+        return new IndexUpdate(player, "Make your bid in this chat!" +
+                "\nYou can send your own bid in the form of XO" +
+                "\n - X: Bid number" +
+                "\n - O: Suit (NT: no trump, S: spades, etc.)" +
+                (bid == null ? "" : "\nPrevious highest bid is " + bid),
+                UpdateType.SEND_BID_REQUEST);
     }
 
     //Send player notification of invalid bid

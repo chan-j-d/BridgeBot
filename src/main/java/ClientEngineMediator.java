@@ -1,13 +1,20 @@
 public interface ClientEngineMediator {
 
+    /*
+    Game-related commands
+     */
     public void addGameIds(GameChatIds gameChatIds);
     public boolean containsUserId(long id);
-    public void setIOInterface(IOInterface ioInterface);
-    public void addEngine(GameEngine engine);
-    public void broadcastUpdateFromEngine(GameEngine engine, GameUpdate update);
-    public void updateEngine(long chatId, String message);
-    public String queryEngine(long chatId, String query);
+    public boolean cancelGame(long chatId);
+    public void resend(long chatId);
     public void registerResponse(long chatId, String response);
+    public boolean queryInProgress(long chatId);
+
+    /*
+    Game/Interface-management commands
+     */
+    public void setIOInterface(IOInterface ioInterface);
+    public void broadcastUpdateFromEngine(GameEngine engine, GameUpdate update);
 
 
 }

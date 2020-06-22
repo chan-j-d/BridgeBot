@@ -5,7 +5,7 @@ public class CardCollection extends ArrayList<Card> {
     @Override
     public String toString() {
         String baseString = super.toString();
-        return "{ " + baseString.substring(1, baseString.length() - 1) + " }";
+        return baseString.substring(1, baseString.length() - 1);
     }
 
 }

@@ -1,3 +1,4 @@
+import javax.swing.text.View;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -6,9 +7,9 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     private HashMap<Long, ArrayList<ViewerInterface>> listViewerInterfaces;
     private HashMap<Long, GameEngine> gameEngines;
     private HashMap<Long, Long> playerToGroupIds;
+    private HashMap<Long, TelegramPlayer> chatIdToPlayerMap;
 
     private IOInterface ioInterface;
-    private HashMap<Long, TelegramPlayer> chatIdToPlayerMap;
 
     public TeleEngineMediatorImpl() {
         this.listViewerInterfaces = new HashMap<>();
@@ -83,15 +84,12 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
             currentPlayer = currentUpdate.get(0).getIndex();
             broadcastUpdateFromEngine(gameEngine, currentUpdate);
         }
+
+        removeGame(chatId);
     }
 
     public boolean containsUserId(long id) {
         return playerToGroupIds.containsKey(id);
-    }
-
-    @Override
-    public void addEngine(GameEngine engine) {
-        gameEngines.put(engine.getChatId(), engine);
     }
 
     @Override
@@ -134,22 +132,46 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         return listViewerInterfaces.get(chatId).get(index);
     }
 
-    @Override
-    public void updateEngine(long chatId, String message) {
-        Engine engine = gameEngines.get(chatId);
-    }
-
-    @Override
-    public String queryEngine(long chatId, String query) {
-        return gameEngines.get(chatId).queryEngine(query);
-    }
-
     public void registerResponse(long chatId, String response) {
         chatIdToPlayerMap.get(chatId).registerResponse(response);
     }
 
     private Player getPlayer(long chatId, int playerIndex) {
         return chatIdToPlayerMap.get(listViewerInterfaces.get(chatId).get(playerIndex).getViewerId());
+    }
+
+    public boolean cancelGame(long chatId) {
+        if (!listViewerInterfaces.containsKey(chatId)) {
+            return false;
+        } else {
+            removeGame(chatId);
+            return true;
+        }
+    }
+
+    public void resend(long chatId) {
+        List<ViewerInterface> list = listViewerInterfaces.get(playerToGroupIds.get(chatId));
+        for (ViewerInterface viewer : list) {
+            if (viewer.getViewerId() == chatId) {
+                viewer.resend();
+            }
+        }
+    }
+
+    public boolean queryInProgress(long chatId) {
+        return this.listViewerInterfaces.containsKey(chatId);
+    }
+
+    private void removeGame(long chatId) {
+        ArrayList<ViewerInterface> list = listViewerInterfaces.get(chatId);
+        for (int i = 1; i < list.size(); i++) {
+            long userId = list.get(i).getViewerId();
+            playerToGroupIds.remove(userId);
+            chatIdToPlayerMap.remove(userId);
+        }
+
+        gameEngines.remove(chatId);
+        listViewerInterfaces.remove(chatId);
     }
 
 

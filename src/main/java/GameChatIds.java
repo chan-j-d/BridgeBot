@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.List;
 
 /*
 Encapsulates a simple collection of chatIds for a single game of Bridge.
@@ -46,6 +47,28 @@ public class GameChatIds {
 
     public String getName(int index) {
         return names[index - 1];
+    }
+
+    public void removePlayerId(long gameChatId) {
+        long[] newChatIds = new long[numPlayers + 1];
+        String[] newNames = new String[numPlayers];
+        boolean firstPass = true;
+        newChatIds[0] = chatIds[0];
+        int newIndex = 1;
+        for (int i = 1; i < numPlayers + 1; i++) {
+            if (chatIds[i] == gameChatId && firstPass) {
+                firstPass = false;
+            } else {
+                newChatIds[newIndex] = chatIds[i];
+                newNames[newIndex++ - 1] = names[i - 1];
+            }
+        }
+
+        chatIds = newChatIds;
+        names = newNames;
+        index = index == 1 ? 1 : index - 1;
+
+
     }
 
     public boolean checkFull() {

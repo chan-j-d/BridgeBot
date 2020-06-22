@@ -49,7 +49,7 @@ class Card {
             default:
                 cardString = emoji + this.number;
         }
-        return String.format("[ %s ]", cardString);
+        return cardString;
     }
 
     public char getSuit() {
@@ -80,6 +80,17 @@ class Card {
         char secondSymbol = Character.toUpperCase(cardString.charAt(1));
         String remainderString = cardString.substring(1);
         int number;
+
+        if (symbol == '♠') {
+            symbol = 'S';
+        } else if (symbol == '♥') {
+            symbol = 'H';
+        } else if (symbol == '♦') {
+            symbol = 'D';
+        } else if (symbol == '♣') {
+            symbol = 'C';
+        }
+
         if (cardString.length() == 0 || cardString.length() > 3){
             throw new IllegalCardException(cardString);
         } else if (symbol != 'S' && symbol != 'C' && symbol != 'D' && symbol != 'H') {
@@ -116,6 +127,17 @@ class Card {
         char secondSymbol = Character.toUpperCase(cardString.charAt(1));
         String remainderString = cardString.substring(1);
         int number;
+
+        if (symbol == '♠') {
+            symbol = 'S';
+        } else if (symbol == '♥') {
+            symbol = 'H';
+        } else if (symbol == '♦') {
+            symbol = 'D';
+        } else if (symbol == '♣') {
+            symbol = 'C';
+        }
+
         if (cardString.length() == 0 || cardString.length() > 3){
             return false;
         } else if (symbol != 'S' && symbol != 'C' && symbol != 'D' && symbol != 'H') {

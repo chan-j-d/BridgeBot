@@ -24,7 +24,7 @@ public class BidCoordinator {
         currentHighestBidder = 0;
 
         GameUpdate update = new GameUpdate();
-        update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
+        update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, currentHighestBid));
         update.add(IndexUpdateGenerator.createBidGroupInitialUpdate(currentPlayer));
         return update;
     }
@@ -48,7 +48,7 @@ public class BidCoordinator {
                         currentPlayer, newBid);
                 IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
                 if (currentPlayer == 5) currentPlayer = 1;
-                IndexUpdate bidRequest = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer);
+                IndexUpdate bidRequest = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, newBid);
                 update.add(bidRequest);
                 update.add(playerBidAcknowledge);
                 update.add(groupBidEdit);
@@ -64,7 +64,7 @@ public class BidCoordinator {
                     currentPlayer++, newBid);
             if (currentPlayer == 5) currentPlayer = 1;
             if (++consecutivePasses < 3 || currentHighestBidder == 0) {
-                update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer));
+                update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, currentHighestBid));
                 if (currentHighestBidder == 0) {
                     update.add(IndexUpdateGenerator.createNoBidEdit());
                 } else {
