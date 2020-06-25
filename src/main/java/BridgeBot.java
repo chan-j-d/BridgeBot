@@ -76,15 +76,42 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                     }
                 }
             } else {
-                long userId = update.getMessage().getChatId();
-                if (!mediator.containsUserId(userId)) {
-                    sendMessageToId(userId, "You are not in a game!");
+                long userId = message.getChatId();
+                List<MessageEntity> entities = message.getEntities();
+                if (entities != null) {
+                    for (MessageEntity entity : message.getEntities()) {
+                        String command = entity.getText().substring(1);
+                        if (isValidCommand(command)) {
+                            processPrivateCommand(command, update);
+                        }
+                    }
                 } else {
-                    mediator.registerResponse(userId, update.getMessage().getText());
+                    if (!mediator.containsUserId(userId)) {
+                        sendMessageToId(userId, "You are not in a game!");
+                    } else {
+                        mediator.registerResponse(userId, update.getMessage().getText());
+                    }
                 }
             }
         }
 
+    }
+
+    private void processPrivateCommand(String command, Update update) {
+        long chatId = update.getMessage().getChatId();
+        if (isValidCommand(command)) {
+            switch (command) {
+                case "help":
+                    break;
+                case "resend":
+                    mediator.resend(chatId);
+                    break;
+                default:
+                    sendMessageToId(chatId, "Command only valid in a group chat!");
+            }
+        } else {
+            sendMessageToId(chatId, "Not a valid command!");
+        }
     }
 
 

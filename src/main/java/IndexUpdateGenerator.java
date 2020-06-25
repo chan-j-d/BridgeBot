@@ -94,7 +94,7 @@ public class IndexUpdateGenerator {
                 "\nYou can send your own bid in the form of XO" +
                 "\n - X: Bid number" +
                 "\n - O: Suit (NT: no trump, S: spades, etc.)" +
-                (bid == null ? "" : "\nPrevious highest bid is " + bid),
+                (bid == null ? "" : "\n*Previous Highest Bid*: " + bid),
                 UpdateType.SEND_BID_REQUEST);
     }
 

@@ -1,6 +1,6 @@
 public class GameEngine implements Engine {
 
-    private static int STARTING_PLAYER = 1;
+    private static final int STARTING_PLAYER = 1;
 
     private long chatId;
 
@@ -30,11 +30,14 @@ public class GameEngine implements Engine {
     protected Partners partners1; //bid winners
     protected Partners partners2;
 
+    //GAME LOGGER
+    private GameLogger logger = new GameLogImpl(chatId);
+
     private GameEngine(long chatId) {
         this.players = new PlayerState[5];
         this.chatId = chatId;
         this.brokenTrump = false;
-        this.bidCoordinator = new BidCoordinator(STARTING_PLAYER);
+        this.bidCoordinator = new BidCoordinator(STARTING_PLAYER, logger);
         this.partnerCard = null;
         this.winningBid = null;
         this.trickFirstCard = true;
@@ -85,26 +88,33 @@ public class GameEngine implements Engine {
             if (i == firstPlayer) continue;
             update.add(IndexUpdateGenerator.createPlayerHandInitialUpdate(i, players[i].getHand()));
         }
+
+        logger.addUpdate(update);
         return update;
     }
 
     public GameUpdate processPlay(Bid bid) {
         if (biddingInProgress()) {
-            return bidCoordinator.processBidding(bid);
+            GameUpdate update = bidCoordinator.processBidding(bid);
+            logger.addUpdate(update);
+            return update;
         } else {
             throw new IllegalStateException("Bidding has ended!");
         }
     }
 
     public GameUpdate processPlay(Card card) {
+        GameUpdate update;
         if (partnerCard == null) {
-            return processPartnerCard(card);
+            update = processPartnerCard(card);
         } else {
-            return processCardPlayed(card);
+            update = processCardPlayed(card);
         }
+        logger.addUpdate(update);
+        return update;
     }
 
-    public GameUpdate processPartnerCard(Card card) {
+    private GameUpdate processPartnerCard(Card card) {
         GameUpdate update = new GameUpdate();
 
         if (winningBid == null) {
@@ -126,6 +136,8 @@ public class GameEngine implements Engine {
             update.add(IndexUpdateGenerator.createPartnerCardAcknowledgement(bidWinner, card));
             update.add(IndexUpdateGenerator.createTrickCountUpdate(new int[] {0, 0, 0, 0}));
             update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
+
+            logger.addPartnerCard(card);
         }
 
         return update;
@@ -181,6 +193,8 @@ public class GameEngine implements Engine {
             update.add(IndexUpdateGenerator.createPlayerCardAcknowledgement(
                     currentPlayer,
                     cardPlayed));
+
+            logger.addCardPlayed(currentPlayer, turnCycle, card);
 
             if (trickFirstCard) {
                 currentTrick = new CardCollection();
@@ -246,7 +260,7 @@ public class GameEngine implements Engine {
         return !gameOver;
     }
 
-    public boolean isValidCard(Card card) {
+    private boolean isValidCard(Card card) {
         PlayerState state = players[currentPlayer];
         if (!state.containsCard(card)) {
             return false;
@@ -258,7 +272,7 @@ public class GameEngine implements Engine {
         return true;
     }
 
-    public String getInvalidReason(Card card) {
+    private String getInvalidReason(Card card) {
         PlayerState state = players[currentPlayer];
         if (!state.containsCard(card)) {
             return "You do not have " + card;
@@ -270,7 +284,7 @@ public class GameEngine implements Engine {
     }
 
 
-    public boolean checkWin(int trickWinner) {
+    private boolean checkWin(int trickWinner) {
         Partners winningPartner = partners1.checkContainsPlayer(trickWinner) ?
                 partners1 :
                 partners2;
@@ -362,6 +376,10 @@ public class GameEngine implements Engine {
         return trickFirstCard;
     }
 
+    public boolean gettingPartnerCard() {
+        return partnerCard == null;
+    }
+
     public char getTrumpSuit() {
         return trumpSuit;
     }
@@ -372,6 +390,10 @@ public class GameEngine implements Engine {
 
     public boolean getTrumpBroken() {
         return brokenTrump;
+    }
+
+    public GameLogger getGameLogger() {
+        return this.logger;
     }
 
 }

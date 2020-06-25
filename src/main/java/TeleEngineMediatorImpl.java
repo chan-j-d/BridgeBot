@@ -1,4 +1,3 @@
-import javax.swing.text.View;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -7,15 +6,18 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     private HashMap<Long, ArrayList<ViewerInterface>> listViewerInterfaces;
     private HashMap<Long, GameEngine> gameEngines;
     private HashMap<Long, Long> playerToGroupIds;
-    private HashMap<Long, TelegramPlayer> chatIdToPlayerMap;
+    private HashMap<Long, Player> chatIdToPlayerMap;
 
     private IOInterface ioInterface;
+
+    private LogsManagement logsManager = LogsManagement.init("C:\\Users\\raido\\Desktop\\Orbital_Log_Dump\\");
 
     public TeleEngineMediatorImpl() {
         this.listViewerInterfaces = new HashMap<>();
         this.gameEngines = new HashMap<>();
         this.playerToGroupIds = new HashMap<>();
         this.chatIdToPlayerMap = new HashMap<>();
+
     }
 
     @Override
@@ -63,27 +65,47 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         int currentPlayer = currentUpdate.get(0)
                 .getIndex();
 
-        boolean partnerCard = true;
-
         while (gameEngine.gameInProgress()) {
             if (gameEngine.biddingInProgress()) {
                 Bid newBid = getPlayer(chatId, currentPlayer).getBid();
+                if (newBid == null) {
+                    cancelGame(chatId);
+                    if (this.gameEngines.containsKey(chatId)) {
+                        ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                    }
+                    return;
+                }
                 currentUpdate = gameEngine.processPlay(newBid);
-            } else if (partnerCard) {
-                currentUpdate = gameEngine.processPlay(getPlayer(chatId, currentPlayer).getPartnerCard());
-                partnerCard = false;
-            } else if (gameEngine.firstCardOfTrick()) {
-                currentUpdate = gameEngine.processPlay(getPlayer(chatId, currentPlayer).getFirstCard(
-                        gameEngine.getTrumpBroken(),
-                        gameEngine.getTrumpSuit()));
             } else {
-                currentUpdate = gameEngine.processPlay(getPlayer(chatId, currentPlayer).getNextCard(
-                        gameEngine.getFirstCardSuit(),
-                        gameEngine.getTrumpSuit()));
+                Card card;
+                if (gameEngine.gettingPartnerCard()) {
+                    card = getPlayer(chatId, currentPlayer).getPartnerCard();
+                } else if (gameEngine.firstCardOfTrick()) {
+                    card = getPlayer(chatId, currentPlayer).getFirstCard(
+                            gameEngine.getTrumpBroken(),
+                            gameEngine.getTrumpSuit());
+                } else {
+                    card = getPlayer(chatId, currentPlayer).getNextCard(
+                            gameEngine.getFirstCardSuit(),
+                            gameEngine.getTrumpSuit());
+                }
+                if (card == null) {
+                    if (this.gameEngines.containsKey(chatId)) {
+                        ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                    }
+                    cancelGame(chatId);
+                    return;
+                }
+
+                currentUpdate = gameEngine.processPlay(card);
             }
-            currentPlayer = currentUpdate.get(0).getIndex();
+           currentPlayer = currentUpdate.get(0).getIndex();
             broadcastUpdateFromEngine(gameEngine, currentUpdate);
         }
+
+        System.out.println(logsManager);
+        System.out.println(gameEngine.getGameLogger());
+        logsManager.updateLogs(gameEngine.getGameLogger());
 
         removeGame(chatId);
     }
@@ -144,16 +166,26 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         if (!listViewerInterfaces.containsKey(chatId)) {
             return false;
         } else {
+            List<ViewerInterface> list = listViewerInterfaces.get(chatId);
+            for (int i = 1; i < 5; i++) {
+                ioInterface.sendMessageToId(list.get(i).getViewerId(), "Game has been cancelled");
+            }
             removeGame(chatId);
             return true;
         }
     }
 
     public void resend(long chatId) {
-        List<ViewerInterface> list = listViewerInterfaces.get(playerToGroupIds.get(chatId));
-        for (ViewerInterface viewer : list) {
-            if (viewer.getViewerId() == chatId) {
-                viewer.resend();
+        if (queryInProgress(chatId)) {
+            ViewerInterface viewer = listViewerInterfaces.get(chatId).get(0);
+            viewer.resend();
+        } else {
+            List<ViewerInterface> list = listViewerInterfaces.get(playerToGroupIds.get(chatId));
+            for (ViewerInterface viewer : list) {
+                if (viewer.getViewerId() == chatId) {
+                    viewer.resend();
+                    break;
+                }
             }
         }
     }
@@ -174,5 +206,46 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         listViewerInterfaces.remove(chatId);
     }
 
+    private void testGameIds() {
+        long groupId = 0L;
+        GameEngine gameEngine = GameEngine.init(groupId);
+
+        ArrayList<ViewerInterface> list = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            long chatId = (long) i;
+
+            ViewerInterface viewer;
+            if (i == 0) {
+                viewer = new BridgeGroupInterface(chatId, ioInterface);
+            } else {
+                viewer = new BridgeUserInterface(chatId, ioInterface);
+            }
+
+            list.add(viewer);
+
+            if (i == 0) continue;
+
+            chatIdToPlayerMap.put(chatId, new TestPlayer(
+                    i + "",
+                    gameEngine.getPlayerState(i)));
+
+            playerToGroupIds.put(chatId, groupId);
+        }
+
+        listViewerInterfaces.put(groupId, list);
+
+        gameEngines.put(groupId, gameEngine);
+
+        GameUpdate firstUpdate = gameEngine.startBid();
+        broadcastUpdateFromEngine(gameEngine, firstUpdate);
+        runGame(groupId, firstUpdate);
+    }
+
+    public static void main(String[] args) {
+        TeleEngineMediatorImpl mediator = new TeleEngineMediatorImpl();
+        mediator.setIOInterface(new LocalIOInterface());
+        mediator.testGameIds();
+    }
 
 }

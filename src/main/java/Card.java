@@ -92,9 +92,9 @@ class Card {
         }
 
         if (cardString.length() == 0 || cardString.length() > 3){
-            throw new IllegalCardException(cardString);
+            throw new IllegalStateException(cardString + " is not a valid card string!");
         } else if (symbol != 'S' && symbol != 'C' && symbol != 'D' && symbol != 'H') {
-            throw new IllegalCardException(cardString);
+            throw new IllegalStateException(cardString + " is not a valid card string!");
         } else if (cardString.length() == 2 && (secondSymbol == 'A' || secondSymbol == 'J' ||
                 secondSymbol == 'Q' || secondSymbol == 'K')) {
             switch (secondSymbol) {
@@ -114,9 +114,9 @@ class Card {
             return new Card(symbol, secondSymbol);
         } else if (!(Character.isDigit(secondSymbol) &&
                 (cardString.length() != 3 || Character.isDigit(cardString.charAt(2))))) {
-            throw new IllegalCardException(cardString);
+            throw new IllegalStateException(cardString + " is not a valid card string!");
         } else if ((number = Integer.parseInt(remainderString)) > 13 || number < 1) {
-            throw new IllegalCardException(cardString);
+            throw new IllegalStateException(cardString + " is not a valid card string!");
         } else {
             return new Card(symbol, number);
         }
@@ -163,7 +163,7 @@ class Card {
                 try {
                     card = Card.createCard(((char) i) + "" + ((char) j));
                     System.out.println(card);
-                } catch (IllegalCardException e) {
+                } catch (IllegalArgumentException e) {
                     System.err.println(e);
                 }
             }
@@ -175,7 +175,7 @@ class Card {
                     try {
                         card = Card.createCard(((char) i) + "" + ((char) j) + ((char) k));
                         System.out.println(card);
-                    } catch (IllegalCardException e) {
+                    } catch (IllegalArgumentException e) {
                         System.err.println(e);
                     }
                 }

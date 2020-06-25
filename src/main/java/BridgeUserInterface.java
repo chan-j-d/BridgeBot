@@ -125,7 +125,7 @@ public class BridgeUserInterface implements ViewerInterface {
 
     private Bid getPrevHighestBidFromUpdate(IndexUpdate update) {
         String string = update.getMessage();
-        if (!string.contains("Previous highest")) {
+        if (!string.contains("Previous")) {
             return Bid.createPassBid();
         } else {
             int stringLength = string.length();
@@ -142,8 +142,12 @@ public class BridgeUserInterface implements ViewerInterface {
     }
 
     public void resend() {
-        ioInterface.editMessage(playerId, messageId, RESEND_EDIT);
-        messageId = ioInterface.sendMessageToId(playerId, this.toString());
+        ioInterface.deleteMessage(playerId, messageId);
+        messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
+        if (requesting) {
+            ioInterface.deleteMessage(playerId, requestId);
+            requestId = ioInterface.sendMessageToId(playerId, request);
+        }
     }
 
 
