@@ -6,8 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="BridgeBot" />
         <module name="BridgeBot2" />
+        <module name="BridgeBot" />
       </profile>
     </annotationProcessing>
   </component>
