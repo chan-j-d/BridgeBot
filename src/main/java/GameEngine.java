@@ -31,12 +31,13 @@ public class GameEngine implements Engine {
     protected Partners partners2;
 
     //GAME LOGGER
-    private GameLogger logger = new GameLogImpl(chatId);
+    private GameLogger logger;
 
     private GameEngine(long chatId) {
         this.players = new PlayerState[5];
         this.chatId = chatId;
         this.brokenTrump = false;
+        this.logger = new GameLogImpl(chatId, STARTING_PLAYER);
         this.bidCoordinator = new BidCoordinator(STARTING_PLAYER, logger);
         this.partnerCard = null;
         this.winningBid = null;
@@ -58,21 +59,38 @@ public class GameEngine implements Engine {
             }
         }
 
-        //Distributing cards to hands
-        Deck newDeck = Deck.init();
+        //Ensuring that hands have at least 4 points
+        boolean wash;
         CardCollection[] hands = new CardCollection[4];
-        for (int i = 0; i < 4; i++) {
-            hands[i] = new CardCollection();
-        }
-        int index = 0;
-        while (!newDeck.isEmpty()) {
-            hands[index].add(newDeck.draw());
-            index = index == 3 ? 0 : index + 1;
-        }
+        do {
+            wash = false;
+
+            //Distributing cards to hands
+            Deck newDeck = Deck.init();
+            for (int i = 0; i < 4; i++) {
+                hands[i] = new CardCollection();
+            }
+            int index = 0;
+            while (!newDeck.isEmpty()) {
+                hands[index].add(newDeck.draw());
+                index = index == 3 ? 0 : index + 1;
+            }
+
+            BridgeStandardComparator handSorter = new BridgeStandardComparator();
+
+            for (int i = 0; i < 4; i++) {
+                hands[i].sort(handSorter);
+                int pointCount = CardCollection.countPoints(hands[i]);
+                if (pointCount < 4) {
+                    wash = true;
+                    break;
+                }
+            }
+
+        } while (wash);
 
         //Assigning hands to playerStates
         for (int i = 1; i < 5; i++) {
-            hands[i - 1].sort(new BridgeStandardComparator());
             engine.players[i].setHand(hands[i - 1]);
         }
 
@@ -236,6 +254,13 @@ public class GameEngine implements Engine {
                     update.add(IndexUpdateGenerator.createWinnerGroupUpdate(trickHighestPlayer,
                             getPartnerOf(trickHighestPlayer)));
                     gameOver = true;
+
+                    logger.setLastTrickWinner(trickHighestPlayer);
+                    //Adds remaining cards into logger as unplayed
+                    for (int i = 1; i < 5; i++) {
+                        logger.addCardsNotPlayed(i, players[i].getHand());
+                    }
+
                     return update;
                 }
                 currentPlayer = trickHighestPlayer;

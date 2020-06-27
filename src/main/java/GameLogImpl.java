@@ -1,14 +1,15 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
 public class GameLogImpl implements GameLogger {
 
     private ArrayList<GameUpdate> updates;
+    private int firstPlayer;
     private int[] bidArray;
     private int[][] cardArray;
-    private boolean[] cardsPlayed;
+    private ArrayList<CardCollection> cardsUnplayed;
     private Card partnerCard;
+    private int lastTrickWinner;
 
     private long gameId;
     private String processedString;
@@ -17,7 +18,8 @@ public class GameLogImpl implements GameLogger {
     private static final int NUM_TRICKS = 13;
     private static final int NUM_CARDS = 52;
 
-    public GameLogImpl(long gameId) {
+    public GameLogImpl(long gameId, int firstPlayer) {
+        this.firstPlayer = firstPlayer;
         this.gameId = gameId;
         updates = new ArrayList<>();
         bidArray = new int[NUM_BIDS];
@@ -26,7 +28,10 @@ public class GameLogImpl implements GameLogger {
             cardArray[i] = new int[5];
         }
         processedString = null;
-        cardsPlayed = new boolean[52];
+        cardsUnplayed = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            cardsUnplayed.add(new CardCollection());
+        }
     }
 
     public void addUpdate(GameUpdate update) {
@@ -40,10 +45,17 @@ public class GameLogImpl implements GameLogger {
     public void addCardPlayed(int player, int turn, Card card) {
         int cardIndex = convertCardToIndex(card);
         cardArray[--turn][player] = cardIndex;
-        cardsPlayed[cardIndex] = true;
         if (cardArray[turn][0] == 0) {
             cardArray[turn][0] = player;
         }
+    }
+
+    public void addCardsNotPlayed(int player, CardCollection cards) {
+        cardsUnplayed.set(player - 1, cards);
+    }
+
+    public void setLastTrickWinner(int player) {
+        this.lastTrickWinner = player;
     }
 
     public void addPartnerCard(Card card) {
@@ -108,7 +120,7 @@ public class GameLogImpl implements GameLogger {
                 break;
             case 'D':
                 add = 1;
-                    break;
+                break;
             case 'H':
                 add = 2;
                 break;
@@ -144,9 +156,9 @@ public class GameLogImpl implements GameLogger {
         if (processedString == null) {
             StringBuilder returnString = new StringBuilder();
             returnString.append("Bidding: ");
-            int playerIndex = 0;
+            int playerIndex = firstPlayer - 1;
             Bid highestBid = null;
-            for (int i = 0; i < 35; i++) {
+            for (int i = 0; i < NUM_BIDS; i++) {
                 if (bidArray[i] == 0) {
                     continue;
                 } else {
@@ -167,6 +179,7 @@ public class GameLogImpl implements GameLogger {
             for (int i = 0; i < 13; i++) {
                 int firstPlayer = cardArray[i][0];
                 if (firstPlayer == 0) {
+                    returnString.append("\nPlayer " + lastTrickWinner + " wins trick " + i);
                     break;
                 }
                 playerIndex = firstPlayer;
@@ -186,20 +199,10 @@ public class GameLogImpl implements GameLogger {
             String winningMessage = update.get((update.size() - 1)).getMessage();
             returnString.append("\n" + winningMessage);
 
-            returnString.append("\n\nUnplayed cards: \n");
+            returnString.append("\n\nUnplayed cards: ");
 
-            boolean firstCard = true;
-            for (int i = 0; i < NUM_CARDS; i++) {
-                boolean cardPlayed = cardsPlayed[i];
-                if (!cardPlayed) {
-                    Card card = convertIndexToCard(i);
-                    if (firstCard) {
-                        firstCard = false;
-                        returnString.append(card);
-                    } else {
-                        returnString.append(", " + card);
-                    }
-                }
+            for (int i = 0; i < 4; i++) {
+                returnString.append("\nP" + (i + 1) + ": " + cardsUnplayed.get(i).toString());
             }
 
             processedString = returnString.toString();
@@ -212,6 +215,51 @@ public class GameLogImpl implements GameLogger {
 
     public Iterator<GameUpdate> getUpdateHistory() {
         return updates.iterator();
+    }
+
+    public GameReplay getGameReplay() {
+        ArrayList<Bid> bidList = new ArrayList<>();
+        int playerIndex = firstPlayer - 1;
+        for (int i = 0; i < 35; i++) {
+            if (bidArray[i] == 0) {
+                continue;
+            } else {
+                playerIndex = playerIndex == 4 ? 1 : playerIndex + 1;
+                while (bidArray[i] != playerIndex) {
+                    bidList.add(Bid.createPassBid());
+                    playerIndex = playerIndex == 4 ? 1 : playerIndex + 1;
+                }
+                bidList.add(convertIndexToBid(i));
+            }
+        }
+
+        int numTricks = NUM_TRICKS - cardsUnplayed.get(0).size();
+        CardCollection[] tricks = new CardCollection[numTricks];
+        int[] firstPlayerOfTrick = new int[numTricks];
+
+        for (int i = 0; i < numTricks; i++) {
+            if (cardArray[i][0] == 0) {
+                break;
+            }
+            CardCollection currentTrick = new CardCollection();
+            int[] currentTrickArray = cardArray[i];
+            for (int j = 0; j < 5; j++) {
+                if (j == 0) {
+                    firstPlayerOfTrick[i] = currentTrickArray[j];
+                } else {
+                    currentTrick.add(convertIndexToCard(currentTrickArray[j]));
+                }
+            }
+            tricks[i] = currentTrick;
+        }
+
+        CardCollection[] unplayedCards = cardsUnplayed.toArray(new CardCollection[1]);
+
+        return new GameReplayImpl(firstPlayer, bidList, partnerCard, tricks, firstPlayerOfTrick, unplayedCards);
+    }
+
+    public long getGameId() {
+        return this.gameId;
     }
 
 }

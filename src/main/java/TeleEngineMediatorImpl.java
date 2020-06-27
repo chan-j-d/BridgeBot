@@ -99,13 +99,15 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
                 currentUpdate = gameEngine.processPlay(card);
             }
-           currentPlayer = currentUpdate.get(0).getIndex();
+            currentPlayer = currentUpdate.get(0).getIndex();
             broadcastUpdateFromEngine(gameEngine, currentUpdate);
         }
 
-        System.out.println(logsManager);
-        System.out.println(gameEngine.getGameLogger());
         logsManager.updateLogs(gameEngine.getGameLogger());
+
+        System.out.println(new GameHashImpl1().hashGame(gameEngine.getGameLogger().getGameReplay()));
+
+        ioInterface.registerGameEnded(gameEngine.getGameLogger());
 
         removeGame(chatId);
     }

@@ -115,7 +115,18 @@ public class BridgeUserInterface implements ViewerInterface {
 
         String[] array = new String[NUM_HIGHER_BIDS];
         for (int i = 0; i < NUM_HIGHER_BIDS; i++) {
-            prevHighestBid = Bid.nextHigherBid(prevHighestBid);
+            try {
+                prevHighestBid = Bid.nextHigherBid(prevHighestBid);
+            } catch (IllegalStateException e) {
+                if (i == 0) {
+                    return new String[][] {new String[] {"pass"}};
+                }
+                String[] newArray = new String[i];
+                for (int j = 0; j < i; j++) {
+                    newArray[j] = array[j];
+                }
+                return new String[][] {newArray, new String[] {"pass"}};
+            }
             array[i] = prevHighestBid.toString();
         }
 

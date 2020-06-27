@@ -3,10 +3,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.MessageEntity;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -14,6 +11,9 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.*;
 
 public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
+
+    private static final String WEBSITE_LINK = "https://fyshhh.github.io/bridgebot/";
+    private static final String REGAME_STRING = "regame";
 
     private ClientEngineMediator mediator;
 
@@ -30,6 +30,10 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     //Keeps track of all players that are in the process of joining a game
     private HashSet<Long> userIds = new HashSet<>();
     //All of these are removed the moment a game starts
+
+
+    //Current HashImpl
+    private GameHash hasher = new GameHashImpl1();
 
     //Valid commands, edit this and create the relevant method in order to include it as a Telegram bot command.
     private static List<String> validCommands = Arrays.asList(
@@ -57,6 +61,12 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             if (groupChat) {
                 String command = query.getData().split("@")[0].substring(1);
                 processCommand(command, update);
+
+                if (query.getData().equals(REGAME_STRING)) {
+                    System.out.println("reached regame part");
+                    createGameRequest(update);
+                }
+
             } else {
                 int userId = query.getFrom().getId();
                 String message = query.getData();
@@ -147,14 +157,22 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     //Processes a start game request.
     private void createGameRequest(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId;
+        Chat chat;
+        if (update.hasMessage()) {
+            chatId = update.getMessage().getChatId();
+            chat = update.getMessage().getChat();
+        } else {
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+            chat = update.getCallbackQuery().getMessage().getChat();
+        }
 
         //checks if a similar game has already started
         if (groupChatIds.containsKey(chatId) || checkGameInProgress(chatId)) {
             sendMessageToId(chatId, "Game already started!");
         } else {
             //Assigns the group chat Id with a name
-            String groupName = update.getMessage().getChat().getTitle();
+            String groupName = chat.getTitle();
             groupNames.put(chatId, groupName);
 
             //Creates the gameChatId object to store the game Ids
@@ -524,4 +542,35 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         return "";
     }
 
+    @Override
+    public void registerGameEnded(GameLogger logs) {
+        long chatId = logs.getGameId();
+        String hash = hasher.hashGame(logs.getGameReplay());
+
+        InlineKeyboardButton regameButton = new InlineKeyboardButton()
+                .setText("Start a new game!")
+                .setCallbackData(REGAME_STRING);
+
+        InlineKeyboardButton replayLinkButton = new InlineKeyboardButton()
+                .setText("View replay")
+                .setUrl(createWebLink(hash));
+
+        InlineKeyboardMarkup newMarkup = new InlineKeyboardMarkup()
+                .setKeyboard(List.of(List.of(regameButton), List.of(replayLinkButton)));
+
+        SendMessage message = new SendMessage()
+                .setChatId(chatId)
+                .setText("Game has ended!")
+                .setReplyMarkup(newMarkup);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            System.err.println(e);
+        }
+    }
+
+    private String createWebLink(String hash) {
+        return WEBSITE_LINK + "#" + hash;
+    }
 }

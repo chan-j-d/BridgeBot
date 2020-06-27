@@ -6,4 +6,7 @@ public interface IOInterface {
     public void editMessageButtons(long chatId, int messageId, String[][] buttons);
     public void deleteMessage(long chatId, int messageId);
 
+    public default void registerGameEnded(GameLogger logs) {
+    }
+
 }
