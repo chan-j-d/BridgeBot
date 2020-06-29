@@ -6,6 +6,7 @@
 [1. Introduction](https://github.com/chan-j-d/BridgeBot#1-introduction) <br/>
 [2. Using the bot](https://github.com/chan-j-d/BridgeBot#2-using-the-bot) <br/>
 [3. Program structure](https://github.com/chan-j-d/BridgeBot#3-program-structure) <br/>
+[4. Program flow](https://github.com/chan-j-d/BridgeBot#4-program-flow-and-how-they-work) <br/>
 
 ## 1. Introduction
 BridgeBot is a Telegram bot used to facilitate games of _floating bridge_ on Telegram. 
@@ -116,10 +117,10 @@ Link to replay system repository: https://github.com/fyshhh/BridgeBot
 - On each iteration, the engine returns a series of IndexUpdates in the form of a GameUpdate. A mediator then decides how to broadcast these updates
 
 ##### 3.2.4. Comparators:
-- *BridgeStandardComparator* allows comparison of cards with the following rules
+- `BridgeStandardComparator` allows comparison of cards with the following rules
     1. 'S' > 'H' > 'D' > 'C'
     2. ACE = 1 > 13 > 12 > ... > 2
-- *BridgeTrumpComparator* allows comparison of cards for a specific trick
+- `BridgeTrumpComparator` allows comparison of cards for a specific trick
     - Requires two arguments as inputs, the trump suit (*T*) and the suit of the first card played (*F*)
         1. if (*T* != *F*), then *T* > *F* > other suits
         1. else *T* = *F* > other suits
@@ -185,9 +186,9 @@ the engine is currently in the bidding phase or the trick-taking phase
     Card getNextCard(char firstSuit, char trumpSuit);
  - This allows us to create new classes such as AI-bots to play the game
     - This can help us with testing of the game engine locally and more importantly, create auto-playing bots
- - Visit section 4. to see how Telegram user's responses are obtained
+ - Visit section 4.1 to see how Telegram user's responses are obtained
  
-#### 3.5. BridgeBot: The program that controls the TelegramBot
+#### 3.5. BridgeBot: The program that controls the Telegram Bot
 - In general, Telegram bots can only respond to user prompts via the method `onUpdateReceived(Update update)`. 
 Every button pressed and every message sent will be sent to the bot as an update
 - In order to reduce clutter, we have reduced the number of ways that users can interact with the bot 
@@ -206,12 +207,64 @@ Every button pressed and every message sent will be sent to the bot as an update
 - The main purpose of these interfaces is to separately control how IndexUpdates are viewed by the user/group
 - It allows us to incorporate additional graphics and keep relevant information that are not sent with each update
 - There consists of two main types of implementations of these
-    1. BridgeUserInterface: Controls what a user sees in the private chat with the bot
-    2. BridgeGroupInterface: Controls what the group sees and updates the current state of the game
+    1. `BridgeUserInterface`: Controls what a user sees in the private chat with the bot
+    2. `BridgeGroupInterface`: Controls what the group sees and updates the current state of the game
     
 ##### 3.6.2. Logs Manager:
 - After each game concludes, this program retrieves the game logs of the game that just concluded and saves it locally to a designated directory
 - For reviewing games after they have ended. Used for verifying that other features are working
+
+## 4. Program flow and how they work
+In this section, we will be going through some examples of how a user's response is registered and processed
+#### 4.1. Interacting with the bot
+![processing user updates](/images/processing_user_update.jpg) <br/>
+- `creategame`: creates a new GameChatId object (holder for 5 chat IDs with the 0th index being the group chatID by default) and add it to a hash map with the key being the group ID
+    - Checks that the group ID does not already have a running game
+- `joingame`: Adds the ID of the user who sent the command to the GameChatId object
+    - Checks that the user is not currently in another game in a different group
+    - Checks that the user has not already joined the same game
+    - Checks that the game does not already have four players
+- `leavegame`: Removes the ID of the user from the current GameChatID object
+    - Checks that the user is in the current game
+    - Checks that the game has not already started
+- `startgame`: Initiates the game by passing the GameChatId object to the mediator
+- `cancelgame`: Cancels the game that is currently running
+    - Checks whether the user is an adminstrator of the group, if they are, the game is cancelled
+    - Otherwise, check that the player is in the game. Only players in-game can vote
+    - If this is the first time the command is called in the game, a vote is started and the user's ID is recorded
+    - If this is not the first time the command is called, we check that the user ID is not the same as the first one. If they are distinct, we cancel the game
+
+#### 4.2. Registering user response
+Here, we look at an instance of how we obtain user response. The main idea is that when the `TelegramPlayer`'s `getNextBid(..)` is called, 
+the class signals that it is waiting for a response by setting `boolean awaitingBidResponse = true`. It then creates a new thread
+and waits for 90 seconds. If during these 90 seconds, the appropriate user sends an appropriate response, then the response is saved, 
+the thread is interrupted and the response is returned
+
+##### 4.2.1. Overall flow example (Requesting a card to be played)
+![overall flow](/images/sample_program_flow.jpg) <br/>
+1. After a GameUpdate is returned by the engine, the mediator registers it and broadcasts the update
+2. One of the updates will be a request from a player for the next Card to be played
+3. At the same time, the mediator asks the TelegramPlayer object for its next Card. This causes the player to start waiting
+4. When the user receives the request from the bot, they will (hopefully) respond
+5. The response is received in the form of either a message or callback query (from a button pressed). This response is registered
+6. The TelegramPlayer object reads the response and if it is valid, interrupts the sleeping thread and returns the response
+7. The mediator acquires the response from the TelegramPlayer and passes it on to the engine
+8. The engine processes the Card played and returns a new GameUpdate and the process repeats
+
+#### 4.3. Ending a game and replay system
+![game ends](/images/ending_game.jpg) <br/>
+We have chosen for the BridgeBot program to be the one handling the hashing as only the Telegram user needs to know about the 
+replay.
+1. As the mediator runs the game as a while loop, it consistently queries the engine to see if the game has ended
+2. When the game ends, the mediator records a copy of the logs by giving it to the `LogsManagement` class 
+(which saves a copy of it)
+3. The mediator passes another copy of the `GameLogger` object to the `BridgeBot`
+4. `BridgeBot` retrieves the `GameReplay`, parses it through a `GameHash` which returns a String. We then link the user directly to the site
+with the replay String
+
+For more details on the replay's hashing, please visit the repository linked in Section 1.
+
+
 
 
 

@@ -66,7 +66,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 processCommand(command, update);
 
                 if (query.getData().equals(REGAME_STRING)) {
-                    System.out.println("reached regame part");
                     createGameRequest(update);
                 }
 
@@ -589,6 +588,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     @Override
     public void registerGameEnded(GameLogger logs) {
         long chatId = logs.getGameId();
+
+        if (cancelGameId.containsKey(chatId)) {
+            cancelGameId.remove(chatId);
+        }
+
         String hash = hasher.hashGame(logs.getGameReplay());
 
         InlineKeyboardButton regameButton = new InlineKeyboardButton()
