@@ -42,8 +42,4 @@ public class TestPlayer extends Player {
         return this.getHand().get(0);
     }
 
-    void registerResponse(String response) {
-        return;
-    }
-
 }
