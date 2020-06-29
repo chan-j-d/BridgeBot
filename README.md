@@ -1,10 +1,64 @@
 #BridgeBot
 
-Telegram bot for playing floating/Singaporean bridge. (Work in progress)
+![poster](/images/poster.jpg)
 
-###Program Structure
+#### Contents
 
-####Player
+
+## 1. Introduction
+BridgeBot is a Telegram bot used to facilitate games of _floating bridge_ on Telegram. 
+Besides the main game, we also aim to help newer plays learn the game by including recommendation features
+and a replay system.
+
+Link to replay system repository: https://github.com/fyshhh/BridgeBot
+
+## 2. Using the bot
+#### 2.1. Starting a game
+ 1. Add the bot @O\_Bridge\_Bot to your Telegram group of choice
+ 2. All users who are interested to play will have to enable the bot by going to @O\_Bridge\_Bot and sending the bot the message "/start"
+ 3. Create a game by using the command "/creategame@O\_Bridge\_Bot" in a group chat
+ 4. Users can join with the command "/joingame@O\_Bridge\_Bot" or clicking the "Join Game" button
+ 5. Once four players have joined, the game can be started with the command "/startgame@O\_Bridge\_Bot" or by clicking the "Start Game" button
+ 
+#### 2.2. Playing the game
+ 1. On game start: Players will be sent their hand in the form of 13 Telegram buttons in a 3 x 5 grid via private messaging
+ ![sample player hand](/images/player_hands.png)
+ 2. Bidding process: A random player will be chosen to start the bidding. A request will be sent via private messaging to players when it is their turn to bid. 
+ The bot will send players an array of buttons with the next five (or fewer if the bid is high) larger bids and a "Pass" option. Players can also create their own bid based on the format specified by the request.
+ Players will be notified of each other's bid via the group chat.
+ ![sample player bids](/images/bidding.png)
+ 3. Choosing a partner card: Once a highest bid is found, the player who had the highest bid will be asked for a partner. 
+ The player will have to send his chosen partner card based on the format specified by the request
+ 4. Trick-taking play (How to play a card): Once bidding has ended, players will be notified when it is their turn to play a card via private messaging.
+ Players choose which card they would like to play by clicking on the corresponding button in their 'hand'
+ 5. Trick-taking play (Updates): After each card is played, an update is sent to the group. The game feed is updated showing the newest card played.
+ If it is the fourth card played in a trick, the trick is awarded to the winner and the number of tricks each player has is updated.
+ ![sample_game_feed](/images/sample_game_feed.jpg)
+ 6. Ending the game: Once either pairs of players have reached the required number of tricks, the game terminates, announcing the winners.
+ Two buttons will be sent:
+    1. "Create a new game"
+    2. "View the replay": This opens a link to a page where users are able to view a replay of the game that just concluded
+    
+#### 2.3. Other features and commands:
+ - "/cancelgame": Used for prematurely ending the current game
+    - Only usable in a group chat
+    - Group adminstrators that use the command will be able to cancel the game immediately
+    - Only current players will be able to vote to end the game. 2 votes (out of 4) are required to cancel the game
+ - "/help": Used for requesting help from the bot (Work-in-progress)
+ - "/leavegame": For players to leave a game during the joining phase
+ - "/resend": The bot resends the current game feed (for group chats) or player hand (for private chats)
+    - This command is mainly used for reducing the amount of scrolling that users need to do to view the game feed
+    
+#### 2.4. Miscellaneous bot features
+ - The bot has a default timer of 90s before the game automatically cancels due to inactivity
+    - (To be implemented) Users will be able to set the amount of time given for each turn
+    
+ 
+ 
+ 
+### Program Structure
+
+#### Player
 Player is an abstract class which requires the implementing class to override the following methods:
 ```$xslt
 Bid getBit(); //Gets the next bid from the player

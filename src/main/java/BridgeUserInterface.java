@@ -82,6 +82,10 @@ public class BridgeUserInterface implements ViewerInterface {
     }
 
     public String[][] processHand(String hand) {
+        if (hand.equals("")) {
+            return null;
+        }
+
         String[] cards = hand.split(",[ ?]");
         String[][] cardArray;
         if (cards.length > 10) {

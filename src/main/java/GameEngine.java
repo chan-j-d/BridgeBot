@@ -1,7 +1,5 @@
 public class GameEngine implements Engine {
 
-    private static final int STARTING_PLAYER = 1;
-
     private long chatId;
 
     private PlayerState[] players;
@@ -34,11 +32,12 @@ public class GameEngine implements Engine {
     private GameLogger logger;
 
     private GameEngine(long chatId) {
+        this.currentPlayer = (int) (Math.random() * (4)) + 1;
         this.players = new PlayerState[5];
         this.chatId = chatId;
         this.brokenTrump = false;
-        this.logger = new GameLogImpl(chatId, STARTING_PLAYER);
-        this.bidCoordinator = new BidCoordinator(STARTING_PLAYER, logger);
+        this.logger = new GameLogImpl(chatId, currentPlayer);
+        this.bidCoordinator = new BidCoordinator(currentPlayer, logger);
         this.partnerCard = null;
         this.winningBid = null;
         this.trickFirstCard = true;
@@ -421,4 +420,11 @@ public class GameEngine implements Engine {
         return this.logger;
     }
 
+
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 10; i++) {
+            System.out.println((int) (Math.random() * (4)) + 1);
+        }
+    }
 }

@@ -19,8 +19,7 @@ public class BridgeGroupInterface implements ViewerInterface {
     private static final String NULL_STRING = "-";
 
     private static final String HEADER = "*GAME FEED*";
-    private static final String SHORT_LINE_BREAK = "--------------------------------------------";
-    private static final String LONG_LINE_BREAK = SHORT_LINE_BREAK + SHORT_LINE_BREAK;
+    private static final String SHORT_LINE_BREAK = "========================";
 
     public BridgeGroupInterface(long chatId, IOInterface ioInterface) {
         this.chatId = chatId;
@@ -31,11 +30,12 @@ public class BridgeGroupInterface implements ViewerInterface {
 
     public String toString() {
         if (bidConcluded) {
-            return String.format("%s\n%s\n%s\n*Trick Counts*: %s\n\n*Trick* %s",
-                    HEADER + "\n" + LONG_LINE_BREAK,
+            return String.format("%s\n%s\n%s\n*Trick Counts*: %s\n%s\n*Trick* %s",
+                    HEADER + "\n" + SHORT_LINE_BREAK,
                     bidString,
-                    LONG_LINE_BREAK,
+                    SHORT_LINE_BREAK,
                     gameState == null ? NULL_STRING : gameState,
+                    SHORT_LINE_BREAK,
                     currentTrick == null ? NULL_STRING : currentTrick);
         } else {
             return String.format(HEADER + "\n" + SHORT_LINE_BREAK +
@@ -111,7 +111,7 @@ public class BridgeGroupInterface implements ViewerInterface {
         String[] cardsArray = cards.split(", ");
 
         StringBuilder finalString = new StringBuilder();
-        finalString.append("*" + turn + "*: ");
+        finalString.append("*" + turn + "*: \n");
         finalString.append("{  ");
         boolean first = true;
         for (String card : cardsArray) {
