@@ -1,0 +1,13 @@
+How to register your response with the bot
+1. During the bidding phase, when it is your turn to bid, you will be prompted to make a bid via private message. The bot will display 6 buttons (normally), the next 5 higher bids and an option to pass. You can choose to click on one of them or instead key in your own bid as a message to the bot. The format (that is also specified in the request) is of the form XO where:
+ - X: is the bid number \n
+ - O: is the suit that you would like to bid. 'S' for spades, 'H' for hearts, etc. 'NT' for no trump.\n
+
+2. The winner of the bid will be prompted for a partner card. Specify it in the form OX where:
+ - O: is the suit, 'S' for spades, 'H' for hearts, etc.
+ - X: is the number corresponding to the card. 1-13 or 'A' for ace, 'K' for king, etc.
+and send it as a private message to the bot.\n
+
+3. During trick-taking play, you can click one of the buttons in the 3 x 5 grid sent at the start via private message to play the corresponding card in your hand. Played cards will be removed from your hand. You can instead also choose to type it out and send via private message in the same format as above.
+
+4. At the end of the game, you can view the game replay by clicking on the replay button which will link you to a site to view the replay.

@@ -38,6 +38,9 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     //Current HashImpl
     private GameHash hasher = new GameHashImpl1();
 
+    //HelpManager to manage help commands separately
+    private HelpManager helpManager = HelpManager.init();
+
     //Valid commands, edit this and create the relevant method in order to include it as a Telegram bot command.
     private static List<String> validCommands = Arrays.asList(
             "startgame",
@@ -93,9 +96,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 if (entities != null) {
                     for (MessageEntity entity : message.getEntities()) {
                         String command = entity.getText().substring(1);
-                        if (isValidCommand(command)) {
-                            processPrivateCommand(command, update);
-                        }
+                        processPrivateCommand(command, update);
                     }
                 } else {
                     if (!mediator.containsUserId(userId)) {
@@ -111,9 +112,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private void processPrivateCommand(String command, Update update) {
         long chatId = update.getMessage().getChatId();
+        System.out.println(command);
         if (isValidCommand(command)) {
             switch (command) {
                 case "help":
+                    helpRequest(update);
                     break;
                 case "resend":
                     mediator.resend(chatId);
@@ -121,6 +124,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 default:
                     sendMessageToId(chatId, "Command only valid in a group chat!");
             }
+        } else if (helpManager.validHelpCommmand(command)) {
+            sendMessageToId(chatId, helpManager.getHelpText(command), false);
         } else {
             sendMessageToId(chatId, "Not a valid command!");
         }
@@ -147,6 +152,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 cancelGameRequest(update);
                 break;
             case "help":
+                helpRequest(update);
                 break;
             case "resend":
                 resendRequest(update);
@@ -450,6 +456,17 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else {
             sendMessageToId(chatId, "No game running!");
         }
+    }
+
+    private void helpRequest(Update update) {
+        boolean groupMessage = update.getMessage().isGroupMessage();
+        long sendId;
+        if (groupMessage) {
+            sendId = (long) update.getMessage().getFrom().getId();
+        } else {
+            sendId = update.getMessage().getChatId();
+        }
+        sendMessageToId(sendId, helpManager.getDefaultText(), false);
     }
 
     private void resendRequest(Update update) {

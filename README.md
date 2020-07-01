@@ -215,7 +215,7 @@ Every button pressed and every message sent will be sent to the bot as an update
 - For reviewing games after they have ended. Used for verifying that other features are working
 
 ## 4. Program flow and how they work
-In this section, we will be going through some examples of how a user's response is registered and processed
+In this section, we will be going through how some of the more important systems work.
 #### 4.1. Interacting with the bot
 ![processing user updates](/images/processing_user_update.jpg) <br/>
 - `creategame`: creates a new GameChatId object (holder for 5 chat IDs with the 0th index being the group chatID by default) and add it to a hash map with the key being the group ID
@@ -228,6 +228,7 @@ In this section, we will be going through some examples of how a user's response
     - Checks that the user is in the current game
     - Checks that the game has not already started
 - `startgame`: Initiates the game by passing the GameChatId object to the mediator
+    - Checks that the current GameChatId has four players
 - `cancelgame`: Cancels the game that is currently running
     - Checks whether the user is an adminstrator of the group, if they are, the game is cancelled
     - Otherwise, check that the player is in the game. Only players in-game can vote

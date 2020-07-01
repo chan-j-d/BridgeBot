@@ -1,0 +1,8 @@
+How to start a game
+1. Use the "/creategame@O_Bridge_Bot" command in a group chat to create an open game. BridgeBot will send a message in the group which will show the current players in the game.
+
+2. Use the command "/joingame@O_Bridge_Bot" or click the button below the BridgeBot creategame message to join the game.
+
+3. Once there are 4 players, use the command "/startgame@O_Bridge_Bot" or click on the button below the creategame message to start the game.
+
+4. You can leave the game before it starts by using the "/leavegame@O_Bridge_Bot" command

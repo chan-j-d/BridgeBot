@@ -1,0 +1,1 @@
+Hi, this is BridgeBot! This bot is primarily to provide a platform to play floating bridge. Use the command "/creategame@O_Bridge_Bot" in a group chat to get started! If you need additional help, please use one of the commands below!
