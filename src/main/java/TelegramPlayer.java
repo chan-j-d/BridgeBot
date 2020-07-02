@@ -1,6 +1,6 @@
 public class TelegramPlayer extends Player {
 
-    private static int WAIT_TIME = 90000; //default of 90 sec
+    private static int WAIT_TIME = 900000; //default of 90 sec
 
     private boolean awaitingBidResponse;
     private boolean awaitingCardResponse;

@@ -75,6 +75,13 @@ public class GameChatIds {
         return index == numPlayers + 1;
     }
 
+    public boolean checkContainsId(long id) {
+        for (long containedId : chatIds) {
+            if (containedId == id) return true;
+        }
+        return false;
+    }
+
     public String toString() {
         return Arrays.toString(chatIds);
     }

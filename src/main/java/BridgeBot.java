@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.util.*;
 
@@ -15,6 +16,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private static final String WEBSITE_LINK = "https://fyshhh.github.io/bridgebot/";
     private static final String REGAME_STRING = "regame";
+    private static final String BOT_BLOCKED_ERROR = "Forbidden: bot was blocked by the user";
 
     private ClientEngineMediator mediator;
 
@@ -112,7 +114,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private void processPrivateCommand(String command, Update update) {
         long chatId = update.getMessage().getChatId();
-        System.out.println(command);
+        if (command.equals("start")) {
+            sendMessageToId(chatId, "You have registered with us! Create a game in a group chat with the command " +
+                    "/creategame@O_Bridge_Bot!", false);
+            return;
+        }
         if (isValidCommand(command)) {
             switch (command) {
                 case "help":
@@ -260,23 +266,27 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else if (!groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "No game running!");
 
-            /* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
+            ///* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
         } else if (mediator.containsUserId(userId) || userIds.contains(userId)) {
             sendMessageToId(userId, "You are already in a game!");
-            */
+            //*/
 
         } else if ((gameChatIds = groupChatIds.get(chatId)).checkFull()) {
             sendMessageToId(chatId, "Game is full!");
         } else {
+            if (sendMessageToId(userId,
+                    String.format("You have joined a bridge game in %s!",
+                            groupNames.get(chatId))) == -1) {
+                notifyRegister(chatId, firstName);
+                return;
+            }
 
             gameChatIds.addUserIdAndName(userId, firstName);
 
             userIds.add(userId);
 
             sendMessageToId(chatId, "*" + firstName + "* has joined the game!");
-            sendMessageToId(userId,
-                    String.format("You have joined a bridge game in %s!",
-                            groupNames.get(chatId)));
+
             int messageIdToUpdate = startGameMessageId.get(chatId).first;
             String stringToEdit  = startGameMessageId.get(chatId).second + "\n - " + firstName;
 
@@ -377,9 +387,14 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else if (!groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "No game running!");
         } else {
+            GameChatIds gameChatIds = groupChatIds.get(chatId);
+            if (!gameChatIds.checkContainsId(userId)) {
+                sendMessageToId(chatId, firstName + " is not currently in a game!");
+                return;
+            }
+
             String stringToEdit = startGameMessageId.get(chatId).second
                     .replaceFirst("\n - " + firstName, "");
-            GameChatIds gameChatIds = groupChatIds.get(chatId);
 
             gameChatIds.removePlayerId(userId);
 
@@ -479,6 +494,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         }
     }
 
+    private void notifyRegister(long chatId, String name) {
+        sendMessageToId(chatId, "Hi " + name + ", we have noticed that you have not registered with us!" +
+                "\nPlease go to @O_Bridge_Bot and use the command \"/start\"", false);
+    }
+
     private boolean checkGameInProgress(long chatId) {
         return mediator.queryInProgress(chatId);
     }
@@ -490,10 +510,15 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 .enableMarkdown(true);
         try {
             return execute(message).getMessageId();
-        } catch (TelegramApiException e) {
-            System.err.println(e);
+        } catch (TelegramApiRequestException e1) {
+            System.err.println(e1);
+            if (e1.getApiResponse().equals(BOT_BLOCKED_ERROR)) {
+                return -1;
+            }
+        } catch (TelegramApiException e2) {
+            System.err.println(e2);
         }
-        return -1;
+        return 0;
     }
 
     public int sendMessageToId(long chatId, String text, boolean markdown) {
@@ -503,10 +528,15 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 .enableMarkdown(markdown);
         try {
             return execute(message).getMessageId();
+        } catch (TelegramApiRequestException e1) {
+            System.err.println(e1);
+            if (e1.getApiResponse().equals(BOT_BLOCKED_ERROR)) {
+                return -1;
+            }
         } catch (TelegramApiException e) {
             System.err.println(e);
         }
-        return -1;
+        return 0;
     }
 
     public void editMessage(long chatId, int messageId, String newText) {
@@ -575,7 +605,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             e.printStackTrace();
         }
 
-        return -1;
+        return 0;
 
     }
 
