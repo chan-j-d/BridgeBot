@@ -16,7 +16,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private static final String WEBSITE_LINK = "https://fyshhh.github.io/bridgebot/";
     private static final String REGAME_STRING = "regame";
-    private static final String BOT_BLOCKED_ERROR = "Forbidden: bot was blocked by the user";
+    private static final int BOT_BLOCKED_ERROR_CODE = 403;
 
     private ClientEngineMediator mediator;
 
@@ -512,7 +512,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             return execute(message).getMessageId();
         } catch (TelegramApiRequestException e1) {
             System.err.println(e1);
-            if (e1.getApiResponse().equals(BOT_BLOCKED_ERROR)) {
+            if (e1.getErrorCode() == BOT_BLOCKED_ERROR_CODE) {
                 return -1;
             }
         } catch (TelegramApiException e2) {
@@ -530,7 +530,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             return execute(message).getMessageId();
         } catch (TelegramApiRequestException e1) {
             System.err.println(e1);
-            if (e1.getApiResponse().equals(BOT_BLOCKED_ERROR)) {
+            if (e1.getErrorCode() == BOT_BLOCKED_ERROR_CODE) {
                 return -1;
             }
         } catch (TelegramApiException e) {
