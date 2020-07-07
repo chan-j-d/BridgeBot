@@ -82,7 +82,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
-            boolean groupChat = update.getMessage().getChat().isGroupChat();
+            boolean groupChat = update.getMessage().getChat().isGroupChat() ||
+                    update.getMessage().getChat().isSuperGroupChat();
 
             if (groupChat) {
                 List<MessageEntity> entities = message.getEntities();
@@ -397,6 +398,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                     .replaceFirst("\n - " + firstName, "");
 
             gameChatIds.removePlayerId(userId);
+            userIds.remove(userId);
 
             int messageId = startGameMessageId.get(chatId).first;
 

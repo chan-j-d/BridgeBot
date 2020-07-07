@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="BridgeBot" />
         <module name="BridgeBot2" />
+        <module name="orbital" />
       </profile>
     </annotationProcessing>
   </component>
