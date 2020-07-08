@@ -1,3 +1,5 @@
+import java.util.List;
+
 public class IndexUpdateGenerator {
 
     /*
@@ -55,6 +57,10 @@ public class IndexUpdateGenerator {
                 UpdateType.SEND_UPDATE);
     }
 
+    public static IndexUpdate createPartnerGroupEdit(Card card) {
+        return new IndexUpdate(0, "*Partner Card*: " + card, UpdateType.PARTNER_CARD);
+    }
+
     public static IndexUpdate createPlayerHandInitialUpdate(int player, CardCollection hand) {
         return new IndexUpdate(player, hand.toString(), UpdateType.SEND_HAND);
     }
@@ -81,6 +87,16 @@ public class IndexUpdateGenerator {
     Bidding IndexUpdates
 
     */
+    //start game feed, sets orientation
+    public static IndexUpdate createGameStartNotice() {
+        return new IndexUpdate(0,
+                "*Orientation*: \n" +
+                "North: P1\n" +
+                "East: P2\n" +
+                "South: P3\n" +
+                "West: P4",
+                UpdateType.GAME_START);
+    }
 
     //Acknowledge player bid
     public static IndexUpdate createPlayerBidAcknowledgement(int player, Bid bid) {
@@ -118,9 +134,9 @@ public class IndexUpdateGenerator {
     }
 
     //Edits the current bid message in the group
-    public static IndexUpdate createBidGroupEdit(int player, Bid bid, int consecutivePasses) {
-        return new IndexUpdate(0, String.format("Highest bid of %s by P%d\nNo. consecutive passes: %d",
-                bid, player, consecutivePasses),
+    public static IndexUpdate createBidGroupEdit(List<Bid> bids) {
+        String listString = bids.toString();
+        return new IndexUpdate(0, listString.substring(1, listString.length() - 1),
                 UpdateType.EDIT_BID);
     }
 
@@ -131,8 +147,8 @@ public class IndexUpdateGenerator {
 
     //Creates the a final edit to notify the interface that bidding is over.
     public static IndexUpdate createBidWonEdit(int player, Bid bid) {
-        return new IndexUpdate(0, String.format("*Bid Winner*: P%d\n*Bid*: %s\n*Required Tricks*: %d",
-                player, bid, bid.getRequiredNumber()), UpdateType.BID_END);
+        return new IndexUpdate(0, String.format("*Winning Bid*: %s by P%d\n*Required Tricks*: %d (%d)",
+                bid, player, bid.getRequiredNumber(), bid.getOtherRequiredNumber()), UpdateType.BID_END);
     }
 
     public static IndexUpdate createBidWonUpdate(int lastPlayer, int bidWinner, Bid bid) {

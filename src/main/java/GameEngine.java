@@ -106,6 +106,8 @@ public class GameEngine implements Engine {
             update.add(IndexUpdateGenerator.createPlayerHandInitialUpdate(i, players[i].getHand()));
         }
 
+        update.add(IndexUpdateGenerator.createGameStartNotice());
+
         logger.addUpdate(update);
         return update;
     }
@@ -149,6 +151,7 @@ public class GameEngine implements Engine {
             processPartners(card);
             currentPlayer = getFirstPlayer();
             update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
+            update.add(IndexUpdateGenerator.createPartnerGroupEdit(card));
             update.add(IndexUpdateGenerator.createPartnerGroupUpdate(card, currentPlayer));
             update.add(IndexUpdateGenerator.createPartnerCardAcknowledgement(bidWinner, card));
             update.add(IndexUpdateGenerator.createTrickCountUpdate(new int[] {0, 0, 0, 0}));

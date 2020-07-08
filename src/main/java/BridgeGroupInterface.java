@@ -8,6 +8,8 @@ public class BridgeGroupInterface implements ViewerInterface {
     private int messageId;
     private int updateId;
 
+    private String gameStartString;
+
     private String bidString;
     private String currentTrick;
 
@@ -26,20 +28,28 @@ public class BridgeGroupInterface implements ViewerInterface {
         this.ioInterface = ioInterface;
         this.bidConcluded = false;
         this.updateId = -1;
+        this.gameStartString = "";
     }
 
     public String toString() {
         if (bidConcluded) {
-            return String.format("%s\n%s\n%s\n*Trick Counts*: %s\n%s\n*Trick* %s",
-                    HEADER + "\n" + SHORT_LINE_BREAK,
-                    bidString,
-                    SHORT_LINE_BREAK,
-                    gameState == null ? NULL_STRING : gameState,
-                    SHORT_LINE_BREAK,
-                    currentTrick == null ? NULL_STRING : currentTrick);
+            return HEADER + '\n' +
+                    SHORT_LINE_BREAK + '\n' +
+                    (gameStartString.equals("") ? "" : gameStartString + '\n' + SHORT_LINE_BREAK + '\n') +
+                    "*Bids*: \n" +
+                    bidString + '\n' +
+                    SHORT_LINE_BREAK + '\n' +
+                    "*Trick Counts* " + (gameState == null ? NULL_STRING : gameState) + '\n' +
+                    SHORT_LINE_BREAK + '\n' +
+                    "*Current Trick*: \n" +
+                    (currentTrick == null ? NULL_STRING : currentTrick);
+
         } else {
-            return String.format(HEADER + "\n" + SHORT_LINE_BREAK +
-                    "\n*Bid*: %s", bidString == null ? NULL_STRING : bidString);
+            return HEADER + '\n' +
+                    SHORT_LINE_BREAK + '\n' +
+                    (gameStartString.equals("") ? "" : gameStartString + '\n' + SHORT_LINE_BREAK + '\n') +
+                    "*Bids*: \n" +
+                    (bidString == null ? NULL_STRING : bidString);
         }
     }
 
@@ -47,34 +57,42 @@ public class BridgeGroupInterface implements ViewerInterface {
         UpdateType updateType = update.getUpdateType();
         String message = update.getMessage();
         switch (updateType) {
+            case GAME_START:
+                this.gameStartString = message;
+                break;
             case SEND_UPDATE:
                 if (updateId != -1) {
-                    ioInterface.deleteMessage(chatId, updateId);
+                    deleteMessage(updateId);
                 }
-                updateId = ioInterface.sendMessageToId(chatId, message);
+                updateId = sendMessage(message);
                 break;
             case SEND_BID:
                 this.bidString = message;
-                messageId = ioInterface.sendMessageToId(chatId, this.toString());
+                messageId = sendMessage(this.toString());
+                break;
             case EDIT_BID:
-                this.bidString = message;
-                ioInterface.editMessage(chatId, messageId, this.toString());
+                this.bidString = processBidStateMessage(message);
+                editMessage(messageId, this.toString());
                 break;
             case BID_END:
-                this.bidString = message;
+                this.bidString = this.bidString + '\n' + message;
                 this.bidConcluded = true;
-                ioInterface.editMessage(chatId, messageId, this.toString());
+                editMessage(messageId, this.toString());
                 break;
             case EDIT_HAND:
                 this.currentTrick = processCurrentTrickMessage(message);
-                ioInterface.editMessage(chatId, messageId, this.toString());
+                editMessage(messageId, this.toString());
                 break;
             case EDIT_STATE:
                 this.gameState = processGameStateMessage(message);
-                ioInterface.editMessage(chatId, messageId, this.toString());
+                editMessage(messageId, this.toString());
+                break;
+            case PARTNER_CARD:
+                this.bidString = this.bidString + '\n' + message;
+                editMessage(messageId, this.toString());
                 break;
             case GAME_END:
-                ioInterface.sendMessageToId(chatId, message);
+                sendMessage(message);
                 break;
 
         }
@@ -82,9 +100,39 @@ public class BridgeGroupInterface implements ViewerInterface {
     }
 
     private static String processGameStateMessage(String message) {
-
         String[] trickCounts = message.split(", ");
         return "\n - " + String.join("\n - ", trickCounts);
+
+    }
+
+    private static String processBidStateMessage(String message) {
+        if (message.equals(IndexUpdateGenerator.createNoBidEdit().getMessage())) return message;
+        StringBuilder finalString = new StringBuilder();
+        finalString.append("```");
+        finalString.append("  N  |  E  |  S  |  W  ");
+        int count = 0;
+        for (String bid : message.split(", ")) {
+            if (count++ % 4 == 0) {
+                finalString.append('\n');
+            } else {
+                finalString.append("|");
+            }
+
+            if (bid.equals("null")) {
+                finalString.append("  -  ");
+            } else if (bid.equals(Bid.createPassBid().toString())) {
+                finalString.append("  P  ");
+            } else {
+                finalString.append(" " + bid + " ");
+            }
+        }
+
+        for (; count % 4 != 0; count++) {
+            finalString.append("|     ");
+        }
+        finalString.append("```");
+
+        return finalString.toString();
 
     }
 
@@ -94,7 +142,7 @@ public class BridgeGroupInterface implements ViewerInterface {
 
     public void resend() {
         ioInterface.editMessage(chatId, messageId, RESEND_EDIT);
-        messageId = ioInterface.sendMessageToId(chatId, this.toString());
+        messageId = ioInterface.sendMessageToId(chatId, this.toString(), "md");
     }
 
 
@@ -131,6 +179,17 @@ public class BridgeGroupInterface implements ViewerInterface {
         System.out.println(processCurrentTrickMessage(testString));
     }
 
+    private int sendMessage(String message) {
+        return ioInterface.sendMessageToId(chatId, message, "md");
+    }
+
+    private void deleteMessage(int messageId) {
+        ioInterface.deleteMessage(chatId, messageId);
+    }
+
+    private void editMessage(int messageId, String newMessage) {
+        ioInterface.editMessage(chatId, messageId, newMessage);
+    }
 
 
 

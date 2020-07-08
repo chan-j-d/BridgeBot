@@ -1,14 +1,18 @@
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class BidCoordinator {
 
     private int currentPlayer;
+    private int firstPlayer;
 
     private int consecutivePasses;
 
     private int currentHighestBidder;
     private Bid currentHighestBid;
+
+    private List<Bid> bids;
 
     private static Bid passBid = Bid.createPassBid();
 
@@ -16,7 +20,10 @@ public class BidCoordinator {
 
     public BidCoordinator(int startingPlayer, GameLogger logger) {
         this.currentPlayer = startingPlayer;
+        this.firstPlayer = startingPlayer;
         this.logger = logger;
+        this.bids = new ArrayList<>();
+        for (int i = 1; i < startingPlayer; i++) this.bids.add(null);
     }
 
     public GameUpdate startBid() {
@@ -42,19 +49,22 @@ public class BidCoordinator {
 
         if (!newBid.equals(passBid)) {
             if (currentHighestBidder == 0 || newBid.compareTo(currentHighestBid) > 0) {
+                consecutivePasses = 0;
+
+                bids.add(newBid);
 
                 //UPDATING LOGGER
                 logger.addBid(currentPlayer, newBid);
 
                 currentHighestBidder = currentPlayer;
                 currentHighestBid = newBid;
-                IndexUpdate groupBidEdit = IndexUpdateGenerator.createBidGroupEdit(currentPlayer,
-                        newBid,
-                        consecutivePasses = 0);
+                IndexUpdate groupBidEdit = IndexUpdateGenerator.createBidGroupEdit(bids);
                 IndexUpdate playerBidAcknowledge = IndexUpdateGenerator.createPlayerBidAcknowledgement(
                         currentPlayer, newBid);
-                IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer++, newBid);
-                if (currentPlayer == 5) currentPlayer = 1;
+                IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer, newBid);
+
+                currentPlayer = nextPlayerIndex(currentPlayer);
+
                 IndexUpdate bidRequest = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, newBid);
                 update.add(bidRequest);
                 update.add(playerBidAcknowledge);
@@ -67,23 +77,35 @@ public class BidCoordinator {
             }
 
         } else {
+
+            bids.add(newBid);
+
             IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer, newBid);
             IndexUpdate playerBidAcknowledge = IndexUpdateGenerator.createPlayerBidAcknowledgement(
-                    currentPlayer++, newBid);
-            if (currentPlayer == 5) currentPlayer = 1;
+                    currentPlayer, newBid);
+
             if (++consecutivePasses < 3 || currentHighestBidder == 0) {
+
+                currentPlayer = nextPlayerIndex(currentPlayer);
+
                 update.add(IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, currentHighestBid));
                 if (currentHighestBidder == 0) {
                     update.add(IndexUpdateGenerator.createNoBidEdit());
                 } else {
-                    update.add(IndexUpdateGenerator.createBidGroupEdit(
-                            currentHighestBidder, currentHighestBid, consecutivePasses));
+                    update.add(IndexUpdateGenerator.createBidGroupEdit(bids));
                 }
                 update.add(playerBidAcknowledge);
                 update.add(groupUpdate);
+
+                if (consecutivePasses == 4) {
+                    for (int i = 0; i < 4; i++) {
+                        bids.remove(Bid.createPassBid());
+                    }
+                }
             } else {
                 update.add(IndexUpdateGenerator.createPartnerCardRequest(currentHighestBidder));
                 update.add(playerBidAcknowledge);
+                update.add(IndexUpdateGenerator.createBidGroupEdit(bids));
                 update.add(IndexUpdateGenerator.createBidWonEdit(currentHighestBidder, currentHighestBid));
                 update.add(IndexUpdateGenerator.createBidWonUpdate(currentPlayer,
                         currentHighestBidder,
@@ -105,5 +127,18 @@ public class BidCoordinator {
         }
         return new Pair<>(currentHighestBid, currentHighestBidder);
     }
+
+    public List<Bid> getBids() {
+        return this.bids;
+    }
+
+    public int getFirstPlayer() {
+        return this.firstPlayer;
+    }
+
+    private int nextPlayerIndex(int currentPlayerIndex) {
+        return currentPlayerIndex == 4 ? 1 : currentPlayerIndex + 1;
+    }
+
 
 }

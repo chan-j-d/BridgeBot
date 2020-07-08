@@ -145,9 +145,10 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private String stringEditing(long chatId, String string) {
         String currentString = string;
+        System.out.println(currentString);
         for (int i = 1; i < 5; i++) {
             String playerName = getPlayer(chatId, i).getName();
-            currentString = String.join("*" + playerName + "*", currentString.split("P" + i));
+            currentString = currentString.replace("P" + i, playerName);
         }
         return currentString;
     }

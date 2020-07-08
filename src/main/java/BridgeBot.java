@@ -117,7 +117,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         long chatId = update.getMessage().getChatId();
         if (command.equals("start")) {
             sendMessageToId(chatId, "You have registered with us! Create a game in a group chat with the command " +
-                    "/creategame@O_Bridge_Bot!", false);
+                    "/creategame@" + getBotUsername() + "!");
             return;
         }
         if (isValidCommand(command)) {
@@ -132,7 +132,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                     sendMessageToId(chatId, "Command only valid in a group chat!");
             }
         } else if (helpManager.validHelpCommmand(command)) {
-            sendMessageToId(chatId, helpManager.getHelpText(command), false);
+            sendMessageToId(chatId, helpManager.getHelpText(command));
         } else {
             sendMessageToId(chatId, "Not a valid command!");
         }
@@ -186,6 +186,24 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         if (groupChatIds.containsKey(chatId) || checkGameInProgress(chatId)) {
             sendMessageToId(chatId, "Game already started!");
         } else {
+
+            //FOR TESTING ONLY
+            String testingMessage = update.getMessage().getText();
+            String[] tempArray = testingMessage.split(getBotUsername());
+            if (tempArray.length == 2 && tempArray[1].equals(" test")) {
+                GameChatIds gameChatIds = new GameChatIds(4);
+                gameChatIds.addChatId(chatId);
+                for (int i = 0; i < 4; i++) {
+                    User user = update.getMessage().getFrom();
+                    gameChatIds.addUserIdAndName((long) user.getId(), user.getFirstName());
+                }
+
+                mediator.addGameIds(gameChatIds);
+                sendMessageToId(chatId, "Test game starting!");
+                return;
+            }
+            //FOR TESTING ONLY
+
             //Assigns the group chat Id with a name
             String groupName = chat.getTitle();
             groupNames.put(chatId, groupName);
@@ -286,7 +304,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
             userIds.add(userId);
 
-            sendMessageToId(chatId, "*" + firstName + "* has joined the game!");
+            sendMessageToId(chatId, "*" + firstName + "* has joined the game!", "md");
 
             int messageIdToUpdate = startGameMessageId.get(chatId).first;
             String stringToEdit  = startGameMessageId.get(chatId).second + "\n - " + firstName;
@@ -333,7 +351,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         if (!groupChatIds.containsKey(chatId)) {
             if (!checkGameInProgress(chatId)) {
                 sendMessageToId(chatId, "No game running! Create a game with the command /creategame@" +
-                        getBotUsername(), false);
+                        getBotUsername());
             } else {
                 sendMessageToId(chatId, "Game has already started!");
             }
@@ -483,7 +501,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else {
             sendId = update.getMessage().getChatId();
         }
-        sendMessageToId(sendId, helpManager.getDefaultText(), false);
+        sendMessageToId(sendId, helpManager.getDefaultText());
     }
 
     private void resendRequest(Update update) {
@@ -498,7 +516,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private void notifyRegister(long chatId, String name) {
         sendMessageToId(chatId, "Hi " + name + ", we have noticed that you have not registered with us!" +
-                "\nPlease go to @O_Bridge_Bot and use the command \"/start\"", false);
+                "\nPlease go to @" + getBotUsername() + " and use the command \"/start\"");
     }
 
     private boolean checkGameInProgress(long chatId) {
@@ -508,8 +526,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     public int sendMessageToId(long chatId, String text) {
         SendMessage message = new SendMessage()
                 .setChatId(chatId)
-                .setText(text)
-                .enableMarkdown(true);
+                .setText(text);
         try {
             return execute(message).getMessageId();
         } catch (TelegramApiRequestException e1) {
@@ -523,11 +540,17 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         return 0;
     }
 
-    public int sendMessageToId(long chatId, String text, boolean markdown) {
+    public int sendMessageToId(long chatId, String text, String style) {
         SendMessage message = new SendMessage()
                 .setChatId(chatId)
-                .setText(text)
-                .enableMarkdown(markdown);
+                .setText(text);
+
+        if (style.equals("md")) {
+            message = message.enableMarkdown(true);
+        } else if (style.equals("html")) {
+            message = message.enableHtml(true);
+        }
+
         try {
             return execute(message).getMessageId();
         } catch (TelegramApiRequestException e1) {

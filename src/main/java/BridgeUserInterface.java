@@ -37,11 +37,11 @@ public class BridgeUserInterface implements ViewerInterface {
         String message = update.getMessage();
         if (requesting) {
             this.requesting = false;
-            ioInterface.deleteMessage(playerId, requestId);
+            deleteMessage(requestId);
         }
         if (errorShown) {
             this.errorShown = false;
-            ioInterface.deleteMessage(playerId, errorId);
+            deleteMessage(errorId);
         }
         switch (updateType) {
             case SEND_HAND:
@@ -54,14 +54,14 @@ public class BridgeUserInterface implements ViewerInterface {
                 break;
             case SEND_UPDATE:
                 if (updateId != -1) {
-                    ioInterface.deleteMessage(playerId, updateId);
+                    deleteMessage(updateId);
                 }
-                updateId = ioInterface.sendMessageToId(playerId, message);
+                updateId = sendMessage(message);
                 break;
             case SEND_REQUEST:
                 requesting = true;
                 request = message;
-                requestId = ioInterface.sendMessageToId(playerId, "*Request*: " + message);
+                requestId = sendMessage("*Request*: " + message);
                 break;
             case SEND_BID_REQUEST:
                 requesting = true;
@@ -72,9 +72,9 @@ public class BridgeUserInterface implements ViewerInterface {
                 break;
             case ERROR:
                 errorShown = true;
-                errorId = ioInterface.sendMessageToId(playerId, "*Error*: " + message);
+                errorId = sendMessage("*Error*: " + message);
                 requesting = true;
-                requestId = ioInterface.sendMessageToId(playerId, "*Request*: " + request);
+                requestId = sendMessage("*Request*: " +request);
                 break;
         }
 
@@ -157,16 +157,25 @@ public class BridgeUserInterface implements ViewerInterface {
     }
 
     public void resend() {
-        ioInterface.deleteMessage(playerId, messageId);
+        deleteMessage(messageId);
         messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
         if (requesting) {
-            ioInterface.deleteMessage(playerId, requestId);
-            requestId = ioInterface.sendMessageToId(playerId, request);
+            deleteMessage(requestId);
+            requestId = sendMessage(request);
         }
     }
 
+    private int sendMessage(String message) {
+        return ioInterface.sendMessageToId(playerId, message, "md");
+    }
 
+    private void editMessage(int messageId, String message) {
+        ioInterface.editMessage(playerId, messageId, message);
+    }
 
+    private void deleteMessage(int messageId) {
+        ioInterface.deleteMessage(playerId, messageId);
+    }
 
 
 
