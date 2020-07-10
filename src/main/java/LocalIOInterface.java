@@ -27,6 +27,7 @@ public class LocalIOInterface implements IOInterface {
 
     public void editMessageButtons(long chatId, int messageId, String[][] buttons) {
         System.out.println(chatId + "(M: " + messageId + "): ");
+        if (buttons == null) return;
         for (String[] array : buttons) {
             System.out.println(Arrays.toString(array));
         }

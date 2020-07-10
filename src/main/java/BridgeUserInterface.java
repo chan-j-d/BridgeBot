@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -115,7 +116,8 @@ public class BridgeUserInterface implements ViewerInterface {
         return false;
     }
 
-    public String[][] processHand(String hand) {
+    //Creates a 3 x 5 grid (or 2 x 5 / 1 x 5 f for fewer cards) of the cards arranged in grid order
+    private static String[][] processHand2(String hand) {
         if (hand.equals("")) {
             return null;
         }
@@ -145,6 +147,50 @@ public class BridgeUserInterface implements ViewerInterface {
         cardArray[row] = cardRow;
 
         return cardArray;
+
+    }
+
+    //creates a vertical hand for each suit. empty suits will be given a blank column.
+    private static String[][] processHand(String hand) {
+        System.out.println(hand);
+        if (hand.equals("")) return null;
+
+        String[] cards = hand.split(",[ ?]");
+        List<List<String>> listOfSuitCards = new ArrayList<>();
+        List<String> currentSuitCards = new ArrayList<>();
+
+        int index = 0;
+        int longestSuit = 0;
+
+        for (char suit : new char[] {'C', 'D', 'H', 'S'}) {
+            while (index < cards.length) {
+                Card currentCard = Card.createCard(cards[index]);
+                if (currentCard.getSuit() != suit) {
+                    break;
+                } else {
+                    if (currentSuitCards == null) currentSuitCards = new ArrayList<>();
+                    currentSuitCards.add(cards[index++]);
+                }
+            }
+            if (currentSuitCards != null) {
+                listOfSuitCards.add(currentSuitCards);
+                if (currentSuitCards.size() > longestSuit) longestSuit = currentSuitCards.size();
+                currentSuitCards = null;
+            }
+        }
+
+        System.out.println(listOfSuitCards);
+        String[][] finalArray = new String[longestSuit][];
+        for (int i = 0; i < longestSuit; i++) {
+            for (int j = 0; j < listOfSuitCards.size(); j++) {
+                if (j == 0) finalArray[i] = new String[listOfSuitCards.size()];
+                currentSuitCards = listOfSuitCards.get(j);
+                int size = currentSuitCards.size();
+                if (i < size) finalArray[i][j] = currentSuitCards.get(size - 1 - i);
+            }
+        }
+
+        return finalArray;
 
     }
 
@@ -210,6 +256,18 @@ public class BridgeUserInterface implements ViewerInterface {
         ioInterface.deleteMessage(playerId, messageId);
     }
 
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 1000; i++) {
+            for (CardCollection hand : Deck.distributeHands(8)) {
+                hand.sort(new BridgeStandardComparator());
+                System.out.println(hand);
+                Arrays.stream(processHand(hand.toString()))
+                        .forEach(a -> System.out.println(Arrays.toString(a)));
+            }
+        }
+        processHand("");
+    }
 
 
 }

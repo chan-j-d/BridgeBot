@@ -68,12 +68,30 @@ class Deck {
         return index >= 52;
     }
 
+
+    public static CardCollection[] distributeHands(int numberHands) {
+        CardCollection[] hands = new CardCollection[numberHands];
+        for (int i = 0; i < numberHands; i++) {
+            hands[i] = new CardCollection();
+        }
+        Deck deck = Deck.init();
+        int index = 0;
+        for (int i = 0; i < 52; i++) {
+            hands[index++].add(deck.draw());
+            if (index == numberHands) index = 0;
+        }
+        return hands;
+    }
+
     public static void main(String[] args) {
-        //Deck.init().printInOrder();
+        /*//Deck.init().printInOrder();
         Deck deck = Deck.init();
         for (int i = 0; i < 53; i++) {
             System.out.println(i + ": " + deck.draw());
         }
+        */
+
+        System.out.println(Arrays.toString(distributeHands(4)));
     }
 
 }
