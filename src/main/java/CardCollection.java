@@ -47,6 +47,14 @@ public class CardCollection extends ArrayList<Card> {
         }
     }
 
+    public CardCollection copy() {
+        CardCollection copy = new CardCollection();
+        for (Card card : this) {
+            copy.add(card);
+        }
+        return copy;
+    }
+
 
 
 }

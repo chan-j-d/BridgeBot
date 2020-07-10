@@ -4,6 +4,7 @@ import java.util.Iterator;
 public class GameLogImpl implements GameLogger {
 
     private ArrayList<GameUpdate> updates;
+    private CardCollection[] hands;
     private int firstPlayer;
     private int[] bidArray;
     private int[][] cardArray;
@@ -32,10 +33,18 @@ public class GameLogImpl implements GameLogger {
         for (int i = 0; i < 4; i++) {
             cardsUnplayed.add(new CardCollection());
         }
+
+        this.hands = new CardCollection[4];
     }
 
     public void addUpdate(GameUpdate update) {
         this.updates.add(update);
+    }
+
+    public void addHands(CardCollection[] hands) {
+        for (int i = 0; i < 4; i++) {
+            this.hands[i] = hands[i].copy();
+        }
     }
 
     public void addBid(int player, Bid bid) {
@@ -155,7 +164,13 @@ public class GameLogImpl implements GameLogger {
     public String toString() {
         if (processedString == null) {
             StringBuilder returnString = new StringBuilder();
-            returnString.append("Bidding: ");
+
+            returnString.append("Player hands: ");
+            for (int i = 0; i < 4; i++) {
+                returnString.append("\nP" + (i + 1) + ": " + hands[i].toString());
+            }
+
+            returnString.append("\n\nBidding: ");
             int playerIndex = firstPlayer - 1;
             Bid highestBid = null;
             for (int i = 0; i < NUM_BIDS; i++) {

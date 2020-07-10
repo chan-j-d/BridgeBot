@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class GameEngine implements Engine {
 
     private long chatId;
@@ -92,6 +94,8 @@ public class GameEngine implements Engine {
         for (int i = 1; i < 5; i++) {
             engine.players[i].setHand(hands[i - 1]);
         }
+
+        engine.logger.addHands(hands);
 
         return engine;
     }
