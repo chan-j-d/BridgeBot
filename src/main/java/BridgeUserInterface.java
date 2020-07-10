@@ -157,7 +157,7 @@ public class BridgeUserInterface implements ViewerInterface {
 
         String[] cards = hand.split(",[ ?]");
         List<List<String>> listOfSuitCards = new ArrayList<>();
-        List<String> currentSuitCards = new ArrayList<>();
+        List<String> currentSuitCards = null;
 
         int index = 0;
         int longestSuit = 0;
