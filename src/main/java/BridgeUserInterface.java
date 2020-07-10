@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class BridgeUserInterface implements ViewerInterface {
@@ -17,7 +18,12 @@ public class BridgeUserInterface implements ViewerInterface {
     private boolean errorShown;
     private String request;
 
+    private String updateString;
+    private String errorMessage;
+
     private boolean requesting;
+
+    private HashSet<UpdateType> commands;
 
     private static final String RESEND_EDIT = "(Deleted: Refer to the newest message below for details)";
     private static final String NULL_STRING = "-";
@@ -26,6 +32,7 @@ public class BridgeUserInterface implements ViewerInterface {
         this.playerId = playerId;
         this.ioInterface = ioInterface;
         this.updateId = -1;
+        commands = new HashSet<>();
     }
 
     public String toString() {
@@ -34,7 +41,28 @@ public class BridgeUserInterface implements ViewerInterface {
 
     public void processUpdate(IndexUpdate update) {
         UpdateType updateType = update.getUpdateType();
+        commands.add(updateType);
         String message = update.getMessage();
+        switch (updateType) {
+            case SEND_HAND:
+            case EDIT_HAND:
+                this.hand = processHand(message);
+                break;
+            case SEND_UPDATE:
+                updateString = message;
+                break;
+            case SEND_REQUEST:
+            case SEND_BID_REQUEST:
+                request = message;
+                break;
+            case ERROR:
+                errorMessage = message;
+                break;
+        }
+
+    }
+
+    public void run() {
         if (requesting) {
             this.requesting = false;
             deleteMessage(requestId);
@@ -43,42 +71,48 @@ public class BridgeUserInterface implements ViewerInterface {
             this.errorShown = false;
             deleteMessage(errorId);
         }
-        switch (updateType) {
-            case SEND_HAND:
-                this.hand = processHand(message);
-                messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
-                break;
-            case EDIT_HAND:
-                this.hand = processHand(message);
-                ioInterface.editMessageButtons(playerId, messageId, this.hand);
-                break;
-            case SEND_UPDATE:
-                if (updateId != -1) {
-                    deleteMessage(updateId);
-                }
-                updateId = sendMessage(message);
-                break;
-            case SEND_REQUEST:
-                requesting = true;
-                request = message;
-                requestId = sendMessage("*Request*: " + message);
-                break;
-            case SEND_BID_REQUEST:
-                requesting = true;
-                request = message;
-                requestId = ioInterface.sendMessageWithButtons(playerId,
-                        "*Request*: " + message,
-                        createBidOffers(update));
-                break;
-            case ERROR:
-                errorShown = true;
-                errorId = sendMessage("*Error*: " + message);
-                requesting = true;
-                requestId = sendMessage("*Request*: " +request);
-                break;
+
+        if (commands.contains(UpdateType.SEND_HAND)) {
+            messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
+        } else if (commands.contains(UpdateType.EDIT_HAND)) {
+            ioInterface.editMessageButtons(playerId, messageId, this.hand);
         }
 
+        if (commands.contains(UpdateType.SEND_UPDATE)) {
+            if (updateId != -1) {
+                deleteMessage(updateId);
+            }
+            updateId = sendMessage(updateString);
+        }
 
+        if (commands.contains(UpdateType.ERROR)) {
+            errorShown = true;
+            errorId = sendMessage("*Error*: " + errorMessage);
+            requesting = true;
+            requestId = sendMessage("*Request*: " + request);
+        }
+
+        if (commands.contains(UpdateType.SEND_REQUEST)) {
+            requesting = true;
+            requestId = sendMessage("*Request*: " + request);
+        }
+
+        if (commands.contains(UpdateType.SEND_BID_REQUEST)) {
+            requesting = true;
+            requestId = ioInterface.sendMessageWithButtons(playerId,
+                    "*Request*: " + request,
+                    createBidOffers(request));
+        }
+
+        commands = new HashSet<>();
+
+    }
+
+    private boolean commandsContainsOr(UpdateType... updateTypes) {
+        for (UpdateType updateType : updateTypes) {
+            if (commands.contains(updateType)) return true;
+        }
+        return false;
     }
 
     public String[][] processHand(String hand) {
@@ -114,8 +148,8 @@ public class BridgeUserInterface implements ViewerInterface {
 
     }
 
-    private String[][] createBidOffers(IndexUpdate update) {
-        Bid prevHighestBid = getPrevHighestBidFromUpdate(update);
+    private String[][] createBidOffers(String string) {
+        Bid prevHighestBid = getPrevHighestBidFromUpdate(string);
 
         String[] array = new String[NUM_HIGHER_BIDS];
         for (int i = 0; i < NUM_HIGHER_BIDS; i++) {
@@ -138,8 +172,7 @@ public class BridgeUserInterface implements ViewerInterface {
 
     }
 
-    private Bid getPrevHighestBidFromUpdate(IndexUpdate update) {
-        String string = update.getMessage();
+    private Bid getPrevHighestBidFromUpdate(String string) {
         if (!string.contains("Previous")) {
             return Bid.createPassBid();
         } else {
@@ -176,7 +209,6 @@ public class BridgeUserInterface implements ViewerInterface {
     private void deleteMessage(int messageId) {
         ioInterface.deleteMessage(playerId, messageId);
     }
-
 
 
 

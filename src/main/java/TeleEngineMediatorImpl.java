@@ -32,7 +32,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
             ViewerInterface viewer;
             if (i == 0) {
-                viewer = new BridgeGroupInterface(chatId, ioInterface);
+                viewer = new BridgeGroupMovingInterface(chatId, ioInterface);
             } else {
                 viewer = new BridgeUserInterface(chatId, ioInterface);
             }
@@ -125,30 +125,25 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     public void broadcastUpdateFromEngine(GameEngine engine, GameUpdate update) {
         long chatId = engine.getChatId();
         System.out.println(update);
-        IndexUpdate requestUpdate = null;
         for (IndexUpdate indexUpdate : update) {
-            if (indexUpdate.getUpdateType() == UpdateType.SEND_REQUEST) {
-                requestUpdate = indexUpdate;
-                continue;
-            }
             int index = indexUpdate.getIndex();
             String message = indexUpdate.getMessage();
             indexUpdate = indexUpdate.editString(stringEditing(chatId, message));
             ViewerInterface viewerInterface = getViewerInterface(chatId, index);
             viewerInterface.processUpdate(indexUpdate);
         }
-        if (requestUpdate != null) {
-            ViewerInterface viewerInterface = getViewerInterface(chatId, requestUpdate.getIndex());
-            viewerInterface.processUpdate(requestUpdate);
+
+        for (ViewerInterface viewerInterface : listViewerInterfaces.get(chatId)) {
+            viewerInterface.run();
         }
+
     }
 
     private String stringEditing(long chatId, String string) {
         String currentString = string;
-        System.out.println(currentString);
         for (int i = 1; i < 5; i++) {
             String playerName = getPlayer(chatId, i).getName();
-            currentString = currentString.replace("P" + i, playerName);
+            currentString = currentString.replace("P" + i, "*" + playerName + "*");
         }
         return currentString;
     }

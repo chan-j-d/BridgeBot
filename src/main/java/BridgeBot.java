@@ -457,7 +457,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             boolean adminstratorCancelled = false;
             try {
                 String status = execute(getChatMember).getStatus();
-                System.out.println(status);
                 if (status.equals("creator") || status.equals("adminstrator")) {
                     mediator.cancelGame(chatId);
                     if (cancelGameId.containsKey(chatId)) {

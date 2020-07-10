@@ -1,7 +1,7 @@
 import java.util.Arrays;
 import java.util.HashSet;
 
-public class BridgeGroupInterface implements ViewerInterface {
+public class BridgeGroupMovingInterface implements ViewerInterface {
 
     private IOInterface ioInterface;
     private long chatId;
@@ -30,7 +30,7 @@ public class BridgeGroupInterface implements ViewerInterface {
     private static final String HEADER = "*GAME FEED*";
     private static final String SHORT_LINE_BREAK = "========================";
 
-    public BridgeGroupInterface(long chatId, IOInterface ioInterface) {
+    public BridgeGroupMovingInterface(long chatId, IOInterface ioInterface) {
         this.chatId = chatId;
         this.ioInterface = ioInterface;
         this.bidConcluded = false;
@@ -101,17 +101,21 @@ public class BridgeGroupInterface implements ViewerInterface {
 
     public void run() {
 
+
         if (containsCommandsOr(UpdateType.GAME_START, UpdateType.SEND_BID)) {
             messageId = sendMessage(this.toString());
         } else if (containsCommandsOr(UpdateType.EDIT_BID, UpdateType.BID_END, UpdateType.PARTNER_CARD,
                 UpdateType.EDIT_STATE, UpdateType.EDIT_HAND)) {
-            editMessage(messageId, this.toString());
+            if (containsCommandsOr(UpdateType.SEND_UPDATE) && updateId != -1) {
+                deleteMessage(messageId);
+                editMessage(updateId, this.toString());
+                messageId = updateId;
+            } else {
+                editMessage(messageId, this.toString());
+            }
         }
 
         if (containsCommandsOr(UpdateType.SEND_UPDATE)) {
-            if (updateId != -1) {
-                deleteMessage(updateId);
-            }
             updateId = sendMessage(updateMessage);
         }
 
@@ -123,10 +127,11 @@ public class BridgeGroupInterface implements ViewerInterface {
     }
 
     private boolean containsCommandsOr(UpdateType... updateTypes) {
+        boolean finalBool = false;
         for (UpdateType updateType : updateTypes) {
-            if (commands.contains(updateType)) return true;
+            finalBool = finalBool || commands.contains(updateType);
         }
-        return false;
+        return finalBool;
     }
 
 
@@ -225,3 +230,4 @@ public class BridgeGroupInterface implements ViewerInterface {
 
 
 }
+
