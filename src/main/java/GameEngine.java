@@ -2,29 +2,29 @@ import java.util.Arrays;
 
 public class GameEngine implements Engine {
 
-    private long chatId;
+    protected long chatId;
 
-    private PlayerState[] players;
+    protected PlayerState[] players;
 
-    private BidCoordinator bidCoordinator;
+    protected BidCoordinator bidCoordinator;
 
     //MACRO GAME STATES
-    private int currentPlayer;
-    private int bidWinner;
-    private Bid winningBid;
-    private boolean brokenTrump;
-    private char trumpSuit;
-    private Card partnerCard;
-    private int turnCycle;
-    private boolean gameOver;
+    protected int currentPlayer;
+    protected int bidWinner;
+    protected Bid winningBid;
+    protected boolean brokenTrump;
+    protected char trumpSuit;
+    protected Card partnerCard;
+    protected int turnCycle;
+    protected boolean gameOver;
 
     //TURN-BASED GAME STATES
-    private CardCollection currentTrick;
-    private boolean trickFirstCard;
-    private char firstCardSuit;
-    private int trickHighestPlayer;
-    private Card trickHighestCard;
-    private BridgeTrumpComparator turnComparator;
+    protected CardCollection currentTrick;
+    protected boolean trickFirstCard;
+    protected char firstCardSuit;
+    protected int trickHighestPlayer;
+    protected Card trickHighestCard;
+    protected BridgeTrumpComparator turnComparator;
 
     //PARTNERS
     protected Partners partners1; //bid winners
@@ -33,7 +33,7 @@ public class GameEngine implements Engine {
     //GAME LOGGER
     private GameLogger logger;
 
-    private GameEngine(long chatId) {
+    public GameEngine(long chatId) {
         this.currentPlayer = (int) (Math.random() * (4)) + 1;
         this.players = new PlayerState[5];
         this.chatId = chatId;
@@ -46,17 +46,13 @@ public class GameEngine implements Engine {
         this.turnCycle = 1;
         this.gameOver = false;
         this.currentTrick = new CardCollection();
-    }
-
-    public static GameEngine init(long chatId) {
-        GameEngine engine = new GameEngine(chatId);
 
         //Initialising PlayerState objects
         for (int i = 0; i < 5; i++) {
             if (i == 0) {
-                engine.players[i] = null;
+                players[i] = null;
             } else {
-                engine.players[i] = new PlayerState();
+                players[i] = new PlayerState();
             }
         }
 
@@ -92,12 +88,10 @@ public class GameEngine implements Engine {
 
         //Assigning hands to playerStates
         for (int i = 1; i < 5; i++) {
-            engine.players[i].setHand(hands[i - 1]);
+            players[i].setHand(hands[i - 1]);
         }
 
-        engine.logger.addHands(hands);
-
-        return engine;
+        logger.addHands(hands);
     }
 
     public GameUpdate startBid() {
@@ -203,87 +197,96 @@ public class GameEngine implements Engine {
         return this.bidCoordinator.biddingInProgress();
     }
 
-    private GameUpdate processCardPlayed(Card card) {
-
+    //Checks if the card played is valid
+    protected GameUpdate processCardPlayed(Card card) {
         GameUpdate update = new GameUpdate();
-        IndexUpdate trickUpdate;
-
         //checks if the player has the card and the card played is valid for that turn
         if (isValidCard(card)) {
-            Card cardPlayed = players[currentPlayer].playCard(card);
-            update.add(IndexUpdateGenerator.createPlayerHandUpdate(
-                    currentPlayer,
-                    players[currentPlayer].getHand()));
-            update.add(IndexUpdateGenerator.createPlayerCardAcknowledgement(
-                    currentPlayer,
-                    cardPlayed));
-
-            logger.addCardPlayed(currentPlayer, turnCycle, card);
-
-            if (trickFirstCard) {
-                currentTrick = new CardCollection();
-                trickFirstCard = false;
-                firstCardSuit = card.getSuit();
-                turnComparator = new BridgeTrumpComparator(trumpSuit, firstCardSuit);
-                trickHighestPlayer = currentPlayer;
-                trickHighestCard = card;
-
-            } else {
-                if (turnComparator.compare(cardPlayed, trickHighestCard) > 0) {
-                    trickHighestCard = cardPlayed;
-                    trickHighestPlayer = currentPlayer;
-                }
-            }
-
-            currentTrick.add(cardPlayed);
-            if (card.getSuit() == trumpSuit && !brokenTrump) {
-                brokenTrump = true;
-            }
-
-            update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
-
-            //Check if it is the final card of the set. If it is, we reset the trick and increase the turnCycle.
-            if (currentTrick.size() == 4) {
-
-                players[trickHighestPlayer].addTrick(currentTrick);
-                update.add(IndexUpdateGenerator.createTrickCountUpdate(getGameState()));
-
-                trickFirstCard = true;
-
-                trickUpdate = IndexUpdateGenerator.createTrickGroupUpdate(currentPlayer,
-                        cardPlayed, trickHighestPlayer, turnCycle++);
-
-                update.add(trickUpdate);
-
-                //check if game has concluded
-                if (checkWin(trickHighestPlayer)) {
-                    update.add(IndexUpdateGenerator.createWinnerGroupUpdate(trickHighestPlayer,
-                            getPartnerOf(trickHighestPlayer)));
-                    gameOver = true;
-
-                    logger.setLastTrickWinner(trickHighestPlayer);
-                    //Adds remaining cards into logger as unplayed
-                    for (int i = 1; i < 5; i++) {
-                        logger.addCardsNotPlayed(i, players[i].getHand());
-                    }
-
-                    return update;
-                }
-                currentPlayer = trickHighestPlayer;
-
-            } else {
-                //update player number
-                update.add(IndexUpdateGenerator.createCardGroupUpdate(currentPlayer, cardPlayed));
-                currentPlayer = currentPlayer == 4 ? 1 : currentPlayer + 1;
-            }
-            update.add(0, IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
-
+            update.addAll(registerCardPlayed(card));
         //Otherwise, we request another card
         } else {
             update.add(IndexUpdateGenerator.createInvalidCardUpdate(currentPlayer, getInvalidReason(card)));
         }
+        return update;
+    }
 
+    //Registers the valid card played
+    protected GameUpdate registerCardPlayed(Card card) {
+        GameUpdate update = new GameUpdate();
 
+        Card cardPlayed = players[currentPlayer].playCard(card);
+        update.add(IndexUpdateGenerator.createPlayerHandUpdate(
+                currentPlayer,
+                players[currentPlayer].getHand()));
+        update.add(IndexUpdateGenerator.createPlayerCardAcknowledgement(
+                currentPlayer,
+                cardPlayed));
+
+        logger.addCardPlayed(currentPlayer, turnCycle, card);
+
+        if (trickFirstCard) {
+            currentTrick = new CardCollection();
+            trickFirstCard = false;
+            firstCardSuit = card.getSuit();
+            turnComparator = new BridgeTrumpComparator(trumpSuit, firstCardSuit);
+            trickHighestPlayer = currentPlayer;
+            trickHighestCard = card;
+
+        } else {
+            if (turnComparator.compare(cardPlayed, trickHighestCard) > 0) {
+                trickHighestCard = cardPlayed;
+                trickHighestPlayer = currentPlayer;
+            }
+        }
+
+        currentTrick.add(cardPlayed);
+        if (card.getSuit() == trumpSuit && !brokenTrump) {
+            brokenTrump = true;
+        }
+
+        update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
+
+        //Check if it is the final card of the set. If it is, we reset the trick and increase the turnCycle.
+        if (currentTrick.size() == 4) {
+            update.addAll(registerTrick(cardPlayed));
+        } else {
+            //update player number
+            update.add(IndexUpdateGenerator.createCardGroupUpdate(currentPlayer, cardPlayed));
+            currentPlayer = currentPlayer == 4 ? 1 : currentPlayer + 1;
+            update.add(0, IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
+        }
+
+        return update;
+    }
+
+    //Update for when a trick is complete
+    protected GameUpdate registerTrick(Card cardPlayed) {
+        GameUpdate update = new GameUpdate();
+        players[trickHighestPlayer].addTrick(currentTrick);
+        update.add(IndexUpdateGenerator.createTrickCountUpdate(getGameState()));
+
+        trickFirstCard = true;
+
+        IndexUpdate trickUpdate = IndexUpdateGenerator.createTrickGroupUpdate(currentPlayer,
+                cardPlayed, trickHighestPlayer, turnCycle++);
+
+        update.add(trickUpdate);
+
+        //check if game has concluded
+        if (checkWin(trickHighestPlayer)) {
+            update.add(IndexUpdateGenerator.createWinnerGroupUpdate(trickHighestPlayer,
+                    getPartnerOf(trickHighestPlayer)));
+            gameOver = true;
+
+            logger.setLastTrickWinner(trickHighestPlayer);
+            //Adds remaining cards into logger as unplayed
+            for (int i = 1; i < 5; i++) {
+                logger.addCardsNotPlayed(i, players[i].getHand());
+            }
+
+        } else {
+            currentPlayer = trickHighestPlayer;
+        }
         return update;
     }
 

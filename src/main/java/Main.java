@@ -10,7 +10,6 @@ public class Main {
 
         TelegramBotsApi botsApi = new TelegramBotsApi();
 
-
         ClientEngineMediator mediator = new TeleEngineMediatorImpl();
         BridgeBot bot = new BridgeBot(mediator);
         mediator.setIOInterface(bot);

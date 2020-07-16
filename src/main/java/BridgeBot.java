@@ -20,8 +20,12 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private ClientEngineMediator mediator;
 
+    //While bot is not daemonized, we will ignore all updates coming before time the bot is initialized
+    private int timeOfStart;
+
     public BridgeBot(ClientEngineMediator mediator) {
         this.mediator = mediator;
+        this.timeOfStart = (int) (System.currentTimeMillis() / 1000L);
     }
 
     //GameChatId is an object containing 5 telegram long ids used to start a game
@@ -58,6 +62,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     This includes callback queries for buttons.
      */
     public void onUpdateReceived(Update update) {
+
+        int date = -1;
+        if (update.hasMessage()) date = update.getMessage().getDate();
+        else if (update.hasCallbackQuery()) date = update.getCallbackQuery().getMessage().getDate();
+        if (date < timeOfStart) return;
 
         System.out.println(update);
 

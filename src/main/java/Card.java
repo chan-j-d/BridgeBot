@@ -183,4 +183,19 @@ class Card {
         }
     }
 
+    public static char charToEmoji(char suit) {
+        switch (suit) {
+            case ('S'):
+                return '♠';
+            case ('H'):
+                return '♥';
+            case ('D'):
+                return '♦';
+            case ('C'):
+                return '♣';
+            default:
+                return '\0';
+        }
+    }
+
 }

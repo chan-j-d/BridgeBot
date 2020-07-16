@@ -23,7 +23,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     @Override
     public void addGameIds(GameChatIds chatIds) {
         long groupId = chatIds.getChatId(0);
-        GameEngine gameEngine = GameEngine.init(groupId);
+        GameEngine gameEngine = new CardPlayedEngine(groupId);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 
@@ -34,7 +34,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
             if (i == 0) {
                 viewer = new BridgeGroupMovingInterface(chatId, ioInterface);
             } else {
-                viewer = new BridgeUserInterface(chatId, ioInterface);
+                viewer = new TutorialUserInterface(chatId, ioInterface);
             }
 
             list.add(viewer);
@@ -137,6 +137,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
             viewerInterface.run();
         }
 
+        System.out.println("completed broadcasting");
     }
 
     private String stringEditing(long chatId, String string) {
@@ -206,7 +207,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private void testGameIds() {
         long groupId = 0L;
-        GameEngine gameEngine = GameEngine.init(groupId);
+        GameEngine gameEngine = new CardPlayedEngine(groupId);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 
@@ -215,9 +216,9 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
             ViewerInterface viewer;
             if (i == 0) {
-                viewer = new BridgeGroupInterface(chatId, ioInterface);
+                viewer = new BridgeGroupMovingInterface(chatId, ioInterface);
             } else {
-                viewer = new BridgeUserInterface(chatId, ioInterface);
+                viewer = new TutorialUserInterface(chatId, ioInterface);
             }
 
             list.add(viewer);

@@ -3,35 +3,27 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class BridgeUserInterface implements ViewerInterface {
+public class BridgeUserInterface extends IDedIOUserInterface {
 
-    private IOInterface ioInterface;
-    private long playerId;
-    private int messageId;
-    private int requestId;
-    private int updateId;
-    private int errorId;
+    protected int messageId;
+    protected int requestId;
+    protected int updateId;
+    protected int errorId;
 
-    private static final int NUM_HIGHER_BIDS = 5;
+    protected static final int NUM_HIGHER_BIDS = 5;
 
-    private String[][] hand;
+    protected String[][] hand;
 
-    private boolean errorShown;
-    private String request;
+    protected boolean errorShown;
+    protected String request;
 
-    private String updateString;
-    private String errorMessage;
+    protected String updateString;
+    protected String errorMessage;
 
-    private boolean requesting;
+    protected boolean requesting;
 
-    private HashSet<UpdateType> commands;
-
-    private static final String RESEND_EDIT = "(Deleted: Refer to the newest message below for details)";
-    private static final String NULL_STRING = "-";
-
-    public BridgeUserInterface(long playerId, IOInterface ioInterface) {
-        this.playerId = playerId;
-        this.ioInterface = ioInterface;
+    public BridgeUserInterface(long chatId, IOInterface ioInterface) {
+        super(chatId, ioInterface);
         this.updateId = -1;
         commands = new HashSet<>();
     }
@@ -41,8 +33,8 @@ public class BridgeUserInterface implements ViewerInterface {
     }
 
     public void processUpdate(IndexUpdate update) {
+        super.processUpdate(update);
         UpdateType updateType = update.getUpdateType();
-        commands.add(updateType);
         String message = update.getMessage();
         switch (updateType) {
             case SEND_HAND:
@@ -74,9 +66,9 @@ public class BridgeUserInterface implements ViewerInterface {
         }
 
         if (commands.contains(UpdateType.SEND_HAND)) {
-            messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
+            messageId = ioInterface.sendMessageWithButtons(chatId, toString(), this.hand);
         } else if (commands.contains(UpdateType.EDIT_HAND)) {
-            ioInterface.editMessageButtons(playerId, messageId, this.hand);
+            ioInterface.editMessageButtons(chatId, messageId, this.hand);
         }
 
         if (commands.contains(UpdateType.SEND_UPDATE)) {
@@ -100,20 +92,13 @@ public class BridgeUserInterface implements ViewerInterface {
 
         if (commands.contains(UpdateType.SEND_BID_REQUEST)) {
             requesting = true;
-            requestId = ioInterface.sendMessageWithButtons(playerId,
+            requestId = ioInterface.sendMessageWithButtons(chatId,
                     "*Request*: " + request,
                     createBidOffers(request));
         }
 
-        commands = new HashSet<>();
+        super.run();
 
-    }
-
-    private boolean commandsContainsOr(UpdateType... updateTypes) {
-        for (UpdateType updateType : updateTypes) {
-            if (commands.contains(updateType)) return true;
-        }
-        return false;
     }
 
     //Creates a 3 x 5 grid (or 2 x 5 / 1 x 5 f for fewer cards) of the cards arranged in grid order
@@ -152,7 +137,6 @@ public class BridgeUserInterface implements ViewerInterface {
 
     //creates a vertical hand for each suit. empty suits will be given a blank column.
     private static String[][] processHand(String hand) {
-        System.out.println(hand);
         if (hand.equals("")) return null;
 
         String[] cards = hand.split(",[ ?]");
@@ -179,7 +163,6 @@ public class BridgeUserInterface implements ViewerInterface {
             }
         }
 
-        System.out.println(listOfSuitCards);
         String[][] finalArray = new String[longestSuit][];
         for (int i = 0; i < longestSuit; i++) {
             for (int j = 0; j < listOfSuitCards.size(); j++) {
@@ -231,29 +214,13 @@ public class BridgeUserInterface implements ViewerInterface {
         }
     }
 
-    public long getViewerId() {
-        return this.playerId;
-    }
-
     public void resend() {
         deleteMessage(messageId);
-        messageId = ioInterface.sendMessageWithButtons(playerId, toString(), this.hand);
+        messageId = ioInterface.sendMessageWithButtons(chatId, toString(), this.hand);
         if (requesting) {
             deleteMessage(requestId);
             requestId = sendMessage(request);
         }
-    }
-
-    private int sendMessage(String message) {
-        return ioInterface.sendMessageToId(playerId, message, "md");
-    }
-
-    private void editMessage(int messageId, String message) {
-        ioInterface.editMessage(playerId, messageId, message);
-    }
-
-    private void deleteMessage(int messageId) {
-        ioInterface.deleteMessage(playerId, messageId);
     }
 
 

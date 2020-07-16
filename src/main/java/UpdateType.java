@@ -19,6 +19,8 @@ public enum UpdateType {
     PARTNER_CARD,
 
     GAME_START,
-    GAME_END;
+    GAME_END,
+
+    TUTORIAL;
 
 }

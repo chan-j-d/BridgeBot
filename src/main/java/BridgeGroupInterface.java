@@ -1,38 +1,33 @@
 import java.util.Arrays;
 import java.util.HashSet;
 
-public class BridgeGroupInterface implements ViewerInterface {
+public class BridgeGroupInterface extends IDedIOUserInterface {
 
-    private IOInterface ioInterface;
-    private long chatId;
+    protected int messageId;
+    protected int updateId;
 
-    private int messageId;
-    private int updateId;
+    protected String gameStartString;
 
-    private String gameStartString;
+    protected String bidString;
+    protected String currentTrick;
 
-    private String bidString;
-    private String currentTrick;
-
-    private String gameState;
+    protected String gameState;
 
     //TEMPORARY MESSAGES
-    private String updateMessage;
-    private String endMessage;
+    protected String updateMessage;
+    protected String endMessage;
 
-    private boolean bidConcluded;
+    protected boolean bidConcluded;
 
-    private HashSet<UpdateType> commands;
+    protected HashSet<UpdateType> commands;
 
-    private static final String RESEND_EDIT = "(Deleted: Refer to the newest message below for details)";
-    private static final String NULL_STRING = "-";
+    protected static final String RESEND_EDIT = "(Deleted: Refer to the newest message below for details)";
+    protected static final String NULL_STRING = "-";
 
-    private static final String HEADER = "*GAME FEED*";
-    private static final String SHORT_LINE_BREAK = "========================";
+    protected static final String HEADER = "*GAME FEED*";
 
     public BridgeGroupInterface(long chatId, IOInterface ioInterface) {
-        this.chatId = chatId;
-        this.ioInterface = ioInterface;
+        super(chatId, ioInterface);
         this.bidConcluded = false;
         this.updateId = -1;
         this.gameStartString = "";
@@ -41,30 +36,30 @@ public class BridgeGroupInterface implements ViewerInterface {
 
     public String toString() {
         if (bidConcluded) {
-            return HEADER + '\n' +
-                    SHORT_LINE_BREAK + '\n' +
-                    (gameStartString.equals("") ? "" : gameStartString + '\n' + SHORT_LINE_BREAK + '\n') +
+            return HEADER +
+                    SHORT_LINE_BREAK +
+                    (gameStartString.equals("") ? "" : gameStartString + SHORT_LINE_BREAK) +
                     "*Bids*: \n" +
-                    bidString + '\n' +
-                    SHORT_LINE_BREAK + '\n' +
-                    "*Trick Counts* " + (gameState == null ? NULL_STRING : gameState) + '\n' +
-                    SHORT_LINE_BREAK + '\n' +
-                    "*Current Trick*: \n" +
+                    bidString +
+                    SHORT_LINE_BREAK +
+                    "*Trick Counts* " + (gameState == null ? NULL_STRING : gameState) +
+                    SHORT_LINE_BREAK  +
+                    "*Current Trick* " +
                     (currentTrick == null ? NULL_STRING : currentTrick);
 
         } else {
-            return HEADER + '\n' +
-                    SHORT_LINE_BREAK + '\n' +
-                    (gameStartString.equals("") ? "" : gameStartString + '\n' + SHORT_LINE_BREAK + '\n') +
+            return HEADER +
+                    SHORT_LINE_BREAK +
+                    (gameStartString.equals("") ? "" : gameStartString + SHORT_LINE_BREAK ) +
                     "*Bids*: \n" +
                     (bidString == null ? NULL_STRING : bidString);
         }
     }
 
     public void processUpdate(IndexUpdate update) {
+        super.processUpdate(update);
         UpdateType updateType = update.getUpdateType();
         String message = update.getMessage();
-        commands.add(updateType);
         switch (updateType) {
             case GAME_START:
                 this.gameStartString = message;
@@ -119,14 +114,7 @@ public class BridgeGroupInterface implements ViewerInterface {
             sendMessage(endMessage);
         }
 
-        commands = new HashSet<>();
-    }
-
-    private boolean containsCommandsOr(UpdateType... updateTypes) {
-        for (UpdateType updateType : updateTypes) {
-            if (commands.contains(updateType)) return true;
-        }
-        return false;
+        super.run();
     }
 
 
@@ -167,13 +155,9 @@ public class BridgeGroupInterface implements ViewerInterface {
 
     }
 
-    public long getViewerId() {
-        return this.chatId;
-    }
-
     public void resend() {
-        ioInterface.editMessage(chatId, messageId, RESEND_EDIT);
-        messageId = ioInterface.sendMessageToId(chatId, this.toString(), "md");
+        editMessage(messageId, RESEND_EDIT);
+        messageId = sendMessage(this.toString());
     }
 
 
@@ -181,7 +165,7 @@ public class BridgeGroupInterface implements ViewerInterface {
         String[] temp = message.split(": ");
 
         if (temp.length == 1) {
-            return temp[0] + ": {  }";
+            return temp[0] + ":\n{  }";
         }
 
         String turn = temp[0];
@@ -205,17 +189,6 @@ public class BridgeGroupInterface implements ViewerInterface {
         return finalString.toString();
     }
 
-    private int sendMessage(String message) {
-        return ioInterface.sendMessageToId(chatId, message, "md");
-    }
-
-    private void deleteMessage(int messageId) {
-        ioInterface.deleteMessage(chatId, messageId);
-    }
-
-    private void editMessage(int messageId, String newMessage) {
-        ioInterface.editMessage(chatId, messageId, newMessage);
-    }
 
 
     public static void main(String[] args) {
