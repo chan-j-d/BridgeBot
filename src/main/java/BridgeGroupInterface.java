@@ -19,8 +19,6 @@ public class BridgeGroupInterface extends IDedIOUserInterface {
 
     protected boolean bidConcluded;
 
-    protected HashSet<UpdateType> commands;
-
     protected static final String RESEND_EDIT = "(Deleted: Refer to the newest message below for details)";
     protected static final String NULL_STRING = "-";
 
@@ -31,7 +29,6 @@ public class BridgeGroupInterface extends IDedIOUserInterface {
         this.bidConcluded = false;
         this.updateId = -1;
         this.gameStartString = "";
-        commands = new HashSet<>();
     }
 
     public String toString() {

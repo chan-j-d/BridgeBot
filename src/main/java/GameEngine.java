@@ -145,19 +145,25 @@ public class GameEngine implements Engine {
             update.add(IndexUpdateGenerator.createInvalidCardUpdate(bidWinner,
                     "You cannot choose a card you have!"));
         } else {
-            partnerCard = card;
-            processPartners(card);
-            currentPlayer = getFirstPlayer();
-            update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
-            update.add(IndexUpdateGenerator.createPartnerGroupEdit(card));
-            update.add(IndexUpdateGenerator.createPartnerGroupUpdate(card, currentPlayer));
-            update.add(IndexUpdateGenerator.createPartnerCardAcknowledgement(bidWinner, card));
-            update.add(IndexUpdateGenerator.createTrickCountUpdate(new int[] {0, 0, 0, 0}));
-            update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
+            update.addAll(registerPartnerCard(card));
 
             logger.addPartnerCard(card);
         }
 
+        return update;
+    }
+
+    protected GameUpdate registerPartnerCard(Card card) {
+        GameUpdate update = new GameUpdate();
+        partnerCard = card;
+        processPartners(card);
+        currentPlayer = getFirstPlayer();
+        update.add(IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
+        update.add(IndexUpdateGenerator.createPartnerGroupEdit(card));
+        update.add(IndexUpdateGenerator.createPartnerGroupUpdate(card, currentPlayer));
+        update.add(IndexUpdateGenerator.createPartnerCardAcknowledgement(bidWinner, card));
+        update.add(IndexUpdateGenerator.createTrickCountUpdate(new int[] {0, 0, 0, 0}));
+        update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
         return update;
     }
 
