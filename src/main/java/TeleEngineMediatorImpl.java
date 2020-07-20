@@ -207,7 +207,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private void testGameIds() {
         long groupId = 0L;
-        GameEngine gameEngine = new CardPlayedEngine(groupId);
+        GameEngine gameEngine = new OpenHandEngine(groupId);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 
