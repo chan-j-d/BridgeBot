@@ -20,8 +20,11 @@ public class TutorialUserInterface extends BridgeUserInterface {
     @Override
     public void run() {
         if (commands.contains(UpdateType.TUTORIAL)) {
-            if (tutorialId == -1) tutorialId = ioInterface.sendMessageToId(chatId, tutorialString, "md");
-            else ioInterface.editMessage(chatId, tutorialId, tutorialString);
+            if (tutorialId == -1) {
+                tutorialId = ioInterface.sendMessageToId(chatId, tutorialString, "md");
+            } else {
+                ioInterface.editMessage(chatId, tutorialId, tutorialString);
+            }
         }
         super.run();
     }

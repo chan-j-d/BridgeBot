@@ -255,6 +255,9 @@ public class GameEngine implements Engine {
         //Check if it is the final card of the set. If it is, we reset the trick and increase the turnCycle.
         if (currentTrick.size() == 4) {
             update.addAll(registerTrick(cardPlayed));
+            if (!checkWin(trickHighestPlayer)) {
+                update.add(0, IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
+            }
         } else {
             //update player number
             update.add(IndexUpdateGenerator.createCardGroupUpdate(currentPlayer, cardPlayed));

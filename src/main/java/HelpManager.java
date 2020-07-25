@@ -32,7 +32,7 @@ public class HelpManager {
 
     public static HelpManager init() {
         String rootDirectory = System.getProperty("user.dir");
-        File file = new File(rootDirectory + "\\help_texts");
+        File file = new File(rootDirectory + "/help_texts");
         File[] files = file.listFiles();
         String[] fileNames = file.list();
 

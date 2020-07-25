@@ -3,6 +3,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
+    private static final int NORMAL_GAME = 0;
+    private static final int OPEN_HAND = 1;
+    private static final int CARDS_PLAYED = 2;
+    private static final int SUITS_PLAYED = 3;
+
     private HashMap<Long, ArrayList<ViewerInterface>> listViewerInterfaces;
     private HashMap<Long, GameEngine> gameEngines;
     private HashMap<Long, Long> playerToGroupIds;
@@ -10,7 +15,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private IOInterface ioInterface;
 
-    private LogsManagement logsManager = LogsManagement.init("C:\\Users\\raido\\Desktop\\Orbital_Log_Dump\\");
+    private LogsManagement logsManager = LogsManagement.init("C:/Users/raido/Desktop/Orbital_Log_Dump/");
 
     public TeleEngineMediatorImpl() {
         this.listViewerInterfaces = new HashMap<>();
@@ -21,9 +26,9 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     }
 
     @Override
-    public void addGameIds(GameChatIds chatIds) {
+    public void addGameIds(GameChatIds chatIds, int gameType) {
         long groupId = chatIds.getChatId(0);
-        GameEngine gameEngine = new CardPlayedEngine(groupId);
+        GameEngine gameEngine = gameEngineSelector(groupId, gameType);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 
@@ -55,6 +60,21 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         GameUpdate firstUpdate = gameEngine.startBid();
         broadcastUpdateFromEngine(gameEngine, firstUpdate);
         CompletableFuture.runAsync(() -> runGame(groupId, firstUpdate));
+    }
+
+    private GameEngine gameEngineSelector(long groupId, int gameType) {
+        switch (gameType) {
+            case (NORMAL_GAME):
+                return new GameEngine(groupId);
+            case (OPEN_HAND):
+                return new OpenHandEngine(groupId);
+            case (CARDS_PLAYED):
+                return new CardPlayedEngine(groupId);
+            case (SUITS_PLAYED):
+                return new SuitPlayedEngine(groupId);
+            default:
+                throw new IllegalArgumentException("No such gameType!");
+        }
     }
 
     private void runGame(long chatId, GameUpdate firstUpdate) {

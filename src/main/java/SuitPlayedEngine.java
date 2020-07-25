@@ -43,13 +43,15 @@ public class SuitPlayedEngine extends GameEngine {
 
     private IndexUpdate createSuitPlayedUpdate(int player) {
         StringBuilder finalString = new StringBuilder();
-        finalString.append("*Number of each suit played*: ```");
+        finalString.append("*Number of each suit played*: \n```");
 
         for (char c : new char[] {'S', 'H', 'D', 'C'}) {
             finalString.append(String.format(
                     "\n%c: %d", Card.charToEmoji(c), suitCountPlayed.get(c)
             ));
         }
+
+        finalString.append("```");
 
         return new IndexUpdate(player, finalString.toString(), UpdateType.TUTORIAL);
     }

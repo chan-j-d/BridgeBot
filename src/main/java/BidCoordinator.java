@@ -61,15 +61,26 @@ public class BidCoordinator {
                 IndexUpdate groupBidEdit = IndexUpdateGenerator.createBidGroupEdit(bids);
                 IndexUpdate playerBidAcknowledge = IndexUpdateGenerator.createPlayerBidAcknowledgement(
                         currentPlayer, newBid);
-                IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer, newBid);
 
-                currentPlayer = nextPlayerIndex(currentPlayer);
+                if (newBid.equals(Bid.createNoTrumpBid(7))) {
+                    update.add(IndexUpdateGenerator.createPartnerCardRequest(currentHighestBidder));
+                    update.add(playerBidAcknowledge);
+                    update.add(groupBidEdit);
+                    update.add(IndexUpdateGenerator.createBidWonEdit(currentHighestBidder, currentHighestBid));
+                    update.add(IndexUpdateGenerator.createBidWonUpdate(currentPlayer,
+                            currentHighestBidder,
+                            currentHighestBid));
+                } else {
 
-                IndexUpdate bidRequest = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, newBid);
-                update.add(bidRequest);
-                update.add(playerBidAcknowledge);
-                update.add(groupBidEdit);
-                update.add(groupUpdate);
+                    IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer, newBid);
+                    currentPlayer = nextPlayerIndex(currentPlayer);
+
+                    IndexUpdate bidRequest = IndexUpdateGenerator.createPlayerBidRequest(currentPlayer, newBid);
+                    update.add(bidRequest);
+                    update.add(playerBidAcknowledge);
+                    update.add(groupBidEdit);
+                    update.add(groupUpdate);
+                }
 
             } else {
                 update.add(IndexUpdateGenerator.createInvalidBidUpdate(currentPlayer,
@@ -118,7 +129,8 @@ public class BidCoordinator {
     }
 
     public boolean biddingInProgress() {
-        return consecutivePasses < 3 || currentHighestBidder == 0;
+        return (consecutivePasses < 3 || currentHighestBidder == 0) &&
+                !(currentHighestBid != null && currentHighestBid.equals(Bid.createNoTrumpBid(7)));
     }
 
     public Pair<Bid, Integer> getWinningBid() {

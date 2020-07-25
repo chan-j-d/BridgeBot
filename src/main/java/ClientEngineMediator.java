@@ -3,7 +3,7 @@ public interface ClientEngineMediator {
     /*
     Game-related commands
      */
-    public void addGameIds(GameChatIds gameChatIds);
+    public void addGameIds(GameChatIds gameChatIds, int gameType);
     public boolean containsUserId(long id);
     public boolean cancelGame(long chatId);
     public void resend(long chatId);
