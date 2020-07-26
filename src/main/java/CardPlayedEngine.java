@@ -7,6 +7,7 @@ This engine showcases all cards that have already been played by all players
 public class CardPlayedEngine extends GameEngine {
 
      private HashMap<Character, CardCollection> cardsPlayed;
+     private StringBuilder cardsPlayedString;
 
     public CardPlayedEngine(long chatId) {
         super(chatId);
@@ -14,6 +15,8 @@ public class CardPlayedEngine extends GameEngine {
         for (char c : new char[] {'S', 'H', 'D', 'C'}) {
             cardsPlayed.put(c, new CardCollection());
         }
+        cardsPlayedString = new StringBuilder();
+        cardsPlayedString.append("```Trick|  N  |  E  |  S  |  W  ");
     }
 
     @Override
@@ -37,6 +40,7 @@ public class CardPlayedEngine extends GameEngine {
     }
 
     private void registerCards(CardCollection trick) {
+
         for (Card card : trick) {
             addCard(card, cardsPlayed.get(card.getSuit()));
         }

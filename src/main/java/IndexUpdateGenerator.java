@@ -156,4 +156,9 @@ public class IndexUpdateGenerator {
                 lastPlayer, bidWinner, bid), UpdateType.SEND_UPDATE);
     }
 
+    public static IndexUpdate createSevenNTBidUpdate(int bidWinner) {
+        return new IndexUpdate(0, String.format("P%d bids 7NT!\nP%d wins the bidding with a bid of 7NT!",
+                bidWinner, bidWinner), UpdateType.SEND_UPDATE);
+    }
+
 }

@@ -5,6 +5,16 @@ public class OpenHandEngine extends GameEngine {
     }
 
     @Override
+    public GameUpdate startBid() {
+        GameUpdate update = super.startBid();
+        for (int i = 1; i < 5; i++) {
+            update.add(1, createOtherHandsUpdate(i));
+        }
+        return update;
+
+    }
+
+    @Override
     protected GameUpdate registerTrick(Card cardPlayed) {
         GameUpdate update = super.registerTrick(cardPlayed);
         for (int i = 1; i < 5; i++) {
@@ -13,18 +23,9 @@ public class OpenHandEngine extends GameEngine {
         return update;
     }
 
-    @Override
-    protected GameUpdate registerPartnerCard(Card partnerCard) {
-        GameUpdate update = super.registerPartnerCard(partnerCard);
-        for (int i = 1; i < 5; i++) {
-            update.add(1, createOtherHandsUpdate(i));
-        }
-        return update;
-    }
-
     private IndexUpdate createOtherHandsUpdate(int player) {
         StringBuilder finalString = new StringBuilder();
-        finalString.append("*Number of each suit played*: ```");
+        finalString.append("*Other player hands: \n");
 
         for (int i = 1; i <= 4; i++) {
             if (i == player) continue;
@@ -32,8 +33,9 @@ public class OpenHandEngine extends GameEngine {
                 finalString.append("\n-----------\n");
             } else finalString.append('\n');
 
-            finalString.append("*P" + i + "'s hand*:\n");
+            finalString.append("*P" + i + "'s hand*:\n```");
             finalString.append(processHandBySuit(this.getPlayerState(i).getHand()));
+            finalString.append("```");
         }
 
         return new IndexUpdate(player, finalString.toString(), UpdateType.TUTORIAL);

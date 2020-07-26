@@ -67,11 +67,9 @@ public class BidCoordinator {
                     update.add(playerBidAcknowledge);
                     update.add(groupBidEdit);
                     update.add(IndexUpdateGenerator.createBidWonEdit(currentHighestBidder, currentHighestBid));
-                    update.add(IndexUpdateGenerator.createBidWonUpdate(currentPlayer,
-                            currentHighestBidder,
-                            currentHighestBid));
-                } else {
+                    update.add(IndexUpdateGenerator.createSevenNTBidUpdate(currentHighestBidder));
 
+                } else {
                     IndexUpdate groupUpdate = IndexUpdateGenerator.createBidGroupUpdate(currentPlayer, newBid);
                     currentPlayer = nextPlayerIndex(currentPlayer);
 
