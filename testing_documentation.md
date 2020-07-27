@@ -2,8 +2,8 @@
 
 ### Contents
 [1. Introduction](https://github.com/chan-j-d/BridgeBot/blob/master/testing_documentation.md#1-introduction)   <br/>
-[2. Internal Testing](https://github.com/chan-j-d/BridgeBot/blob/master/testing_documentation.md#1-introduction) <br/>
-[3. Testing User Interactions](https://github.com/chan-j-d/BridgeBot/blob/master/testing_documentation.md#1-introduction) <br/>
+[2. Internal Testing](https://github.com/chan-j-d/BridgeBot/blob/master/testing_documentation.md#2-internal-testing) <br/>
+[3. Testing User Interactions](https://github.com/chan-j-d/BridgeBot/blob/master/testing_documentation.md#3-testing-user-interactions) <br/>
 
 ## 1. Introduction 
 Here, we document the different testing methodologies and test cases we have conducted to ensure our program is working properly.
