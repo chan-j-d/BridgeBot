@@ -414,10 +414,10 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else if (!groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "No game running!");
 
-            ///* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
+            /* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
         } else if (mediator.containsUserId(userId) || userIds.contains(userId)) {
             sendMessageToId(userId, "You are already in a game!");
-            //*/
+            */
 
         } else if ((gameChatIds = groupChatIds.get(chatId)).checkFull()) {
             sendMessageToId(chatId, "Game is full!");
@@ -649,7 +649,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     private void notifyRegister(long chatId, String name) {
         sendMessageToId(chatId, "Hi " + name + ", we have noticed that you have not registered with us!" +
-                "\nPlease go to @" + getBotUsername() + " and use the command \"/start\"");
+                "\nPlease click on @" + getBotUsername() + " and use the command \"/start\"");
     }
 
     private boolean checkGameInProgress(long chatId) {
