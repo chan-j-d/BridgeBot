@@ -19,7 +19,7 @@ public class GameEngine implements Engine {
     protected boolean gameOver;
 
     //TURN-BASED GAME STATES
-    protected CardCollection currentTrick;
+    protected Trick currentTrick;
     protected boolean trickFirstCard;
     protected char firstCardSuit;
     protected int trickHighestPlayer;
@@ -45,7 +45,7 @@ public class GameEngine implements Engine {
         this.trickFirstCard = true;
         this.turnCycle = 1;
         this.gameOver = false;
-        this.currentTrick = new CardCollection();
+        this.currentTrick = new Trick(turnCycle);
 
         //Initialising PlayerState objects
         for (int i = 0; i < 5; i++) {
@@ -231,7 +231,7 @@ public class GameEngine implements Engine {
         logger.addCardPlayed(currentPlayer, turnCycle, card);
 
         if (trickFirstCard) {
-            currentTrick = new CardCollection();
+            currentTrick = new Trick(turnCycle);
             trickFirstCard = false;
             firstCardSuit = card.getSuit();
             turnComparator = new BridgeTrumpComparator(trumpSuit, firstCardSuit);
@@ -245,7 +245,7 @@ public class GameEngine implements Engine {
             }
         }
 
-        currentTrick.add(cardPlayed);
+        currentTrick.add(currentPlayer, cardPlayed);
         if (card.getSuit() == trumpSuit && !brokenTrump) {
             brokenTrump = true;
         }
@@ -253,7 +253,7 @@ public class GameEngine implements Engine {
         update.add(IndexUpdateGenerator.createCurrentTrickUpdate(turnCycle, currentTrick));
 
         //Check if it is the final card of the set. If it is, we reset the trick and increase the turnCycle.
-        if (currentTrick.size() == 4) {
+        if (currentTrick.checkFull()) {
             update.addAll(registerTrick(cardPlayed));
             if (!checkWin(trickHighestPlayer)) {
                 update.add(0, IndexUpdateGenerator.createPlayerCardRequest(currentPlayer));
@@ -277,7 +277,7 @@ public class GameEngine implements Engine {
         trickFirstCard = true;
 
         IndexUpdate trickUpdate = IndexUpdateGenerator.createTrickGroupUpdate(currentPlayer,
-                cardPlayed, trickHighestPlayer, turnCycle++);
+                cardPlayed, trickHighestPlayer, turnCycle);
 
         update.add(trickUpdate);
 
@@ -296,6 +296,7 @@ public class GameEngine implements Engine {
         } else {
             currentPlayer = trickHighestPlayer;
         }
+        turnCycle++;
         return update;
     }
 

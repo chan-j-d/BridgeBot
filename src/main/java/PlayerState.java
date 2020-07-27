@@ -3,13 +3,13 @@ import java.util.ArrayList;
 public class PlayerState {
 
     protected CardCollection hand;
-    protected ArrayList<CardCollection> tricks;
+    protected ArrayList<Trick> tricks;
 
     public PlayerState() {
         this.tricks = new ArrayList<>();
     }
 
-    public void addTrick(CardCollection trick) {
+    public void addTrick(Trick trick) {
         this.tricks.add(trick);
     }
 

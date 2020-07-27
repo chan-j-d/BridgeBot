@@ -6,17 +6,12 @@ This engine showcases all cards that have already been played by all players
 */
 public class CardPlayedEngine extends GameEngine {
 
-     private HashMap<Character, CardCollection> cardsPlayed;
      private StringBuilder cardsPlayedString;
 
     public CardPlayedEngine(long chatId) {
         super(chatId);
-        cardsPlayed = new HashMap<>();
-        for (char c : new char[] {'S', 'H', 'D', 'C'}) {
-            cardsPlayed.put(c, new CardCollection());
-        }
         cardsPlayedString = new StringBuilder();
-        cardsPlayedString.append("```Trick|  N  |  E  |  S  |  W  ");
+        cardsPlayedString.append("*Cards played*: \n```     N      E     S      W  ");
     }
 
     @Override
@@ -30,8 +25,8 @@ public class CardPlayedEngine extends GameEngine {
 
     @Override
     protected GameUpdate registerTrick(Card cardPlayed) {
-        GameUpdate update = super.registerTrick(cardPlayed);
         registerCards(currentTrick);
+        GameUpdate update = super.registerTrick(cardPlayed);
 
         for (int i = 1; i < 5; i++) {
             update.add(1, createCardPlayedUpdate(i));
@@ -39,58 +34,22 @@ public class CardPlayedEngine extends GameEngine {
         return update;
     }
 
-    private void registerCards(CardCollection trick) {
+    private void registerCards(Trick trick) {
+        cardsPlayedString.append("\n" + (turnCycle >= 10 ? turnCycle : turnCycle + " "));
 
-        for (Card card : trick) {
-            addCard(card, cardsPlayed.get(card.getSuit()));
+        for (int player = 1; player <= 4; player++) {
+            Card card = trick.getCardPlayedBy(player);
+            if (card.getNumber() != 10) {
+                cardsPlayedString.append("| " + card + " ");
+            } else {
+                cardsPlayedString.append("| " + card);
+            }
         }
-    }
-
-    private void addCard(Card card, CardCollection suit) {
-        if (card.getNumber() == 1) {
-            suit.add(card);
-            return;
-        }
-        int index = 0;
-        while (index < suit.size()) {
-            int currentNumber = suit.get(index).getNumber();
-            if (currentNumber == 1) {
-                suit.add(index, card);
-                return;
-            } else if (card.getNumber() < currentNumber) {
-                suit.add(index, card);
-                return;
-            } else index++;
-        }
-        suit.add(card);
     }
 
     private IndexUpdate createCardPlayedUpdate(int player) {
-        int longestSuit = -1;
-        StringBuilder finalString = new StringBuilder();
-        finalString.append("*Cards Played*: ```");
-
-        for (char c : new char[] {'S', 'H', 'D', 'C'}) {
-            int currentSuitLength = cardsPlayed.get(c).size();
-            if (currentSuitLength > longestSuit) longestSuit = currentSuitLength;
-        }
-
-        for (int index = 0; index < longestSuit; index++) {
-            finalString.append('\n');
-            for (char c : new char[] {'S', 'H', 'D', 'C'}) {
-                CardCollection suitCardsPlayed = cardsPlayed.get(c);
-                if (suitCardsPlayed.size() <= index) {
-                    finalString.append("     ");
-                } else {
-                    finalString.append(String.format(" %s ", suitCardsPlayed.get(
-                            suitCardsPlayed.size() - index - 1
-                    )));
-                }
-                if (c != 'C') finalString.append('|');
-            }
-        }
-        finalString.append("```");
-        return new IndexUpdate(player, finalString.toString(), UpdateType.TUTORIAL);
+        return new IndexUpdate(player, cardsPlayedString.toString() + "```",
+                UpdateType.TUTORIAL);
     }
 
 

@@ -69,7 +69,7 @@ public class IndexUpdateGenerator {
         return new IndexUpdate(player, hand.toString(), UpdateType.EDIT_HAND);
     }
 
-    public static IndexUpdate createCurrentTrickUpdate(int trickCount, CardCollection trick) {
+    public static IndexUpdate createCurrentTrickUpdate(int trickCount, Trick trick) {
         return new IndexUpdate(0, trickCount + ": " + trick, UpdateType.EDIT_HAND);
     }
 

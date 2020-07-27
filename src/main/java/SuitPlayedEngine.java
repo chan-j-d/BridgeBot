@@ -33,8 +33,9 @@ public class SuitPlayedEngine extends GameEngine {
         return update;
     }
 
-    private void registerCards(CardCollection trick) {
-        for (Card card : trick) {
+    private void registerCards(Trick trick) {
+        for (int player = 1; player <= 4; player++) {
+            Card card = trick.getCardPlayedBy(player);
             char suit = card.getSuit();
             suitCountPlayed.put(suit, suitCountPlayed.get(suit) + 1);
         }

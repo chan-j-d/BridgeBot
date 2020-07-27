@@ -166,7 +166,7 @@ public class BridgeGroupInterface extends IDedIOUserInterface {
         }
 
         String turn = temp[0];
-        String cards = temp[1];
+        String cards = String.join(": ", Arrays.copyOfRange(temp, 1, temp.length));
 
         String[] cardsArray = cards.split(", ");
 
@@ -180,7 +180,7 @@ public class BridgeGroupInterface extends IDedIOUserInterface {
             } else {
                 finalString.append(", ");
             }
-            finalString.append("\\[ " + card + "  ]");
+            finalString.append(card);
         }
         finalString.append("  }");
         return finalString.toString();

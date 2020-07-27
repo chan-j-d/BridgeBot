@@ -10,6 +10,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private HashMap<Long, ArrayList<ViewerInterface>> listViewerInterfaces;
     private HashMap<Long, GameEngine> gameEngines;
+    private HashMap<Long, GameChatIds> chatIdsMap;
     private HashMap<Long, Long> playerToGroupIds;
     private HashMap<Long, Player> chatIdToPlayerMap;
 
@@ -20,6 +21,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     public TeleEngineMediatorImpl() {
         this.listViewerInterfaces = new HashMap<>();
         this.gameEngines = new HashMap<>();
+        this.chatIdsMap = new HashMap<>();
         this.playerToGroupIds = new HashMap<>();
         this.chatIdToPlayerMap = new HashMap<>();
 
@@ -29,6 +31,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     public void addGameIds(GameChatIds chatIds, int gameType) {
         long groupId = chatIds.getChatId(0);
         GameEngine gameEngine = gameEngineSelector(groupId, gameType);
+        chatIdsMap.put(groupId, chatIds);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 
@@ -57,9 +60,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
         gameEngines.put(groupId, gameEngine);
 
-        GameUpdate firstUpdate = gameEngine.startBid();
-        broadcastUpdateFromEngine(gameEngine, firstUpdate);
-        CompletableFuture.runAsync(() -> runGame(groupId, firstUpdate));
+        CompletableFuture.runAsync(() -> runGame(groupId));
     }
 
     private GameEngine gameEngineSelector(long groupId, int gameType) {
@@ -77,10 +78,11 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
         }
     }
 
-    private void runGame(long chatId, GameUpdate firstUpdate) {
+    private void runGame(long chatId) {
         GameEngine gameEngine = gameEngines.get(chatId);
 
-        GameUpdate currentUpdate = firstUpdate;
+        GameUpdate currentUpdate = gameEngine.startBid();
+        broadcastUpdateFromEngine(gameEngine, currentUpdate);
 
         int currentPlayer = currentUpdate.get(0)
                 .getIndex();
@@ -223,11 +225,13 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
         gameEngines.remove(chatId);
         listViewerInterfaces.remove(chatId);
+        chatIdsMap.remove(chatId);
+
     }
 
     private void testGameIds() {
         long groupId = 0L;
-        GameEngine gameEngine = new OpenHandEngine(groupId);
+        GameEngine gameEngine = new CardPlayedEngine(groupId);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 
@@ -256,9 +260,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
         gameEngines.put(groupId, gameEngine);
 
-        GameUpdate firstUpdate = gameEngine.startBid();
-        broadcastUpdateFromEngine(gameEngine, firstUpdate);
-        runGame(groupId, firstUpdate);
+        runGame(groupId);
     }
 
     public static void main(String[] args) {

@@ -229,7 +229,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             }
 
             //Adjust test game type here!!
-            mediator.addGameIds(gameChatIds, NORMAL_GAME);
+            mediator.addGameIds(gameChatIds, CARDS_PLAYED);
             sendMessageToId(chatId, "Test game starting!");
             return;
         }
@@ -412,10 +412,10 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else if (!groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "No game running!");
 
-            ///* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
+            /* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
         } else if (mediator.containsUserId(userId) || userIds.contains(userId)) {
             sendMessageToId(userId, "You are already in a game!");
-            //*/
+            */
 
         } else if ((gameChatIds = groupChatIds.get(chatId)).checkFull()) {
             sendMessageToId(chatId, "Game is full!");
@@ -669,6 +669,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     public int sendMessageToId(long chatId, String text, String style) {
+        System.out.println(text);
         SendMessage message = new SendMessage()
                 .setChatId(chatId)
                 .setText(text);
