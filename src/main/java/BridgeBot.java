@@ -59,7 +59,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
     //Valid commands, edit this and create the relevant method in order to include it as a Telegram bot command.
     private static List<String> validCommands = Arrays.asList(
-            "startgame",
             "joingame",
             "creategame",
             "createpracticegame",
@@ -183,9 +182,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     //Command processer after parsing out the main command as a String.
     public void processCommand(String command, Update update) {
         switch (command) {
-            case "startgame":
-                startGameRequest(update);
-                break;
             case "joingame":
                 joinGameRequest(update);
                 break;
