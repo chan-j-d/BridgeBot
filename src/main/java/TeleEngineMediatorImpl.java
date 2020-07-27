@@ -15,7 +15,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     //Retains memory of old gameChatIds
     private FixedMap<Long, GameChatIds> chatIdsMap;
-    private int TEMP_STORE_SIZE = 1;
+    private int TEMP_STORE_SIZE = 20;
 
     private IOInterface ioInterface;
 
