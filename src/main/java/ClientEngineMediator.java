@@ -3,7 +3,7 @@ public interface ClientEngineMediator {
     /*
     Game-related commands
      */
-    public void addGameIds(GameChatIds gameChatIds, int gameType);
+    public void addGameIds(GameChatIds gameChatIds);
     public boolean containsUserId(long id);
     public boolean cancelGame(long chatId);
     public void resend(long chatId);
@@ -15,6 +15,7 @@ public interface ClientEngineMediator {
      */
     public void setIOInterface(IOInterface ioInterface);
     public void broadcastUpdateFromEngine(GameEngine engine, GameUpdate update);
+    public GameChatIds getRecentGameChatIds(long groupId);
 
 
 }

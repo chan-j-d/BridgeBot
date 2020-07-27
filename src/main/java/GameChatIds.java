@@ -14,6 +14,7 @@ public class GameChatIds {
     private String[] names;
     private int numPlayers;
     private int index;
+    private int gameType;
 
     public GameChatIds(int numPlayers) {
         chatIds = new long[numPlayers + 1];
@@ -43,6 +44,14 @@ public class GameChatIds {
             throw new IllegalArgumentException("Invalid index! Please choose an index between 0 and 4");
         }
         return chatIds[index];
+    }
+
+    public void setGameType(int gameType) {
+        this.gameType = gameType;
+    }
+
+    public int getGameType() {
+        return this.gameType;
     }
 
     public String getName(int index) {

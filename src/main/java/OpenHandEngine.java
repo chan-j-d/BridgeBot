@@ -25,15 +25,13 @@ public class OpenHandEngine extends GameEngine {
 
     private IndexUpdate createOtherHandsUpdate(int player) {
         StringBuilder finalString = new StringBuilder();
-        finalString.append("*Other player hands: \n");
+        finalString.append("*Other player hands*: ");
 
         for (int i = 1; i <= 4; i++) {
             if (i == player) continue;
-            else if ((i != 1 && player != 1) || (player == 1 && i != 2)) {
-                finalString.append("\n-----------\n");
-            } else finalString.append('\n');
+            finalString.append("\n-----------\n");
 
-            finalString.append("*P" + i + "'s hand*:\n```");
+            finalString.append("P" + i + "*'s hand*:\n```\n");
             finalString.append(processHandBySuit(this.getPlayerState(i).getHand()));
             finalString.append("```");
         }

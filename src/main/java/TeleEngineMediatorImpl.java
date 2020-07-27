@@ -10,9 +10,12 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private HashMap<Long, ArrayList<ViewerInterface>> listViewerInterfaces;
     private HashMap<Long, GameEngine> gameEngines;
-    private HashMap<Long, GameChatIds> chatIdsMap;
     private HashMap<Long, Long> playerToGroupIds;
     private HashMap<Long, Player> chatIdToPlayerMap;
+
+    //Retains memory of old gameChatIds
+    private FixedMap<Long, GameChatIds> chatIdsMap;
+    private int TEMP_STORE_SIZE = 1;
 
     private IOInterface ioInterface;
 
@@ -21,15 +24,16 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     public TeleEngineMediatorImpl() {
         this.listViewerInterfaces = new HashMap<>();
         this.gameEngines = new HashMap<>();
-        this.chatIdsMap = new HashMap<>();
+        this.chatIdsMap = new FixedMap<>(TEMP_STORE_SIZE);
         this.playerToGroupIds = new HashMap<>();
         this.chatIdToPlayerMap = new HashMap<>();
 
     }
 
     @Override
-    public void addGameIds(GameChatIds chatIds, int gameType) {
+    public void addGameIds(GameChatIds chatIds) {
         long groupId = chatIds.getChatId(0);
+        int gameType = chatIds.getGameType();
         GameEngine gameEngine = gameEngineSelector(groupId, gameType);
         chatIdsMap.put(groupId, chatIds);
 
@@ -225,8 +229,14 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
         gameEngines.remove(chatId);
         listViewerInterfaces.remove(chatId);
-        chatIdsMap.remove(chatId);
 
+        //Implement way to get rid of old gameCHatIds;
+
+    }
+
+    @Override
+    public GameChatIds getRecentGameChatIds(long groupId) {
+        return chatIdsMap.get(groupId);
     }
 
     private void testGameIds() {
