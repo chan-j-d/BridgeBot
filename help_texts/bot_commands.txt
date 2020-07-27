@@ -1,0 +1,15 @@
+!MBot commands and their uses
+Here is a summary of the bot commands and their uses
+
+Group commands:
+- creategame - creates a normal game of floating bridge
+- createpracticegame - prompts the user on which of the practice game modes they will like to create. Clicking on the option you are interested in will create a game of that mode
+- joingame - an alternative to clicking the "join game" button
+- leavegame - leaves the game lobby before it starts. Does not work once the game starts
+- help - bot will send a private message with the relevant sub-commands to help you
+- resend - resends the Game Feed (Occasionally, due to rate limitations, the Game Feed might disappear. Use this to view it again)
+- cancelgame - cancels the game. Before the game starts, any user in the group can cancel the game. Once the game starts, only a group administrator or two players will be able to cancel the game.
+
+Private commands:
+- help - same as above
+- resend - resends the player's hand and any practice mode's additional message

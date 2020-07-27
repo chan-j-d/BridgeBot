@@ -1,20 +1,7 @@
-Game rules
+!MGame rules
 Floating bridge (also known as Singaporean bridge) is a trick-taking card game played between 4 people. The objective of the game is for a pair of players (known as ‘partners’ to each other) to take the necessary number of tricks; unlike contract bridge, partners are not determined by seating arrangement, but the bidding system. The game is split into two parts – bidding and playing.
 
-*Bidding*
+Click on either command to view the details:
+/bidding_rules - learn about the rules and reasons for bidding
+/trick_playing_rules - learn how to play the trick-taking phase
 
-The bidding phase commences if and only if all players have a hand with greater or equal to 4 points – aces are valued at 4, kings at 3, queens at 2 and jacks at 1; furthermore, 5 cards of the same suit are valued at 1, 6 at 2, and so on. If one or more players’ hands do not meet this requirement, then the cards are shuffled and redealt (known as a ‘wash’).
-
-Bids consist of two parts: a level and a suit. The level of the bid indicates that, should the player win the bid, then he/she and his/her partner would have to win the level plus six tricks, whereas the other two players would have to win eight minus the level tricks. The suit of the bid indicates the ‘trump’ (trumps are explained in the Playing section) suit (or lack thereof), and are ranked in the following ascending order: clubs, diamonds, hearts, spades, no trump. For instance, a winning bid of ‘2 hearts’ suggests that, with hearts as the trump, the winner of the bid and his/her partner would have to win 8 tricks, whereas the other two players would have to win 6.
-
-Bidding starts with the player to the left of the dealer, and continues in a clockwise fashion until three players pass consecutively. Succeeding bids must be higher than the preceding one (as explained in the hierarchy above). The winner of the bid must then choose a card that he/she does not have (this is known as the partner card); the player that has this card in their hand is then known privately as the partner of the winner of the bid.
-
-*Playing*
-
-The playing phase commences depending on the suit of the winning bid – if the winning suit is no trump, then the winner of the bid starts; otherwise, the player to the left of the winner starts.
-
-The starting player then plays a card from their hand to the center, starting a round. Every other player then plays a card from their hand in a clockwise order, until there are four cards played. The base suit of the set is determined by the first card played; cards of a trump suit cannot be played until trump is ‘broken’ (explained below). The winner of the set is whomever played the highest-ranking card (with ace as largest, two as smallest) of the base suit, unless the trump suit is played, in which case the winner would be whomever played the highest-ranking card of the trump suit.
-
-A card of the trump suit can only be played if the player does not have any cards belonging to the base suit. The first instance of a card of the trump suit being played is known as ‘breaking trump’, in which cards of the trump suit can now be played as the first card in a round. Note that rules regarding trump suits do not apply to no trump games. A round ends when the winner of the set is determined; he then takes the set of cards and places them in front of him – this is known as taking a trick. The player who wins the trick then starts the next round.
-
-The game continues until a pair of players have obtained the necessary number of tricks, or optionally all 13 rounds have been played.

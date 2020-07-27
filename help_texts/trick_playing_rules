@@ -1,0 +1,10 @@
+Trick-taking Play Rules
+1. The playing phase commences depending on the suit of the winning bid – if the winning suit is no trump, then the winner of the bid starts; otherwise, the player to the left of the winner starts.
+
+2. The starting player of each trick can start with any card except one of the trump suit until trump is "broken" (explained in 4.). After which, going in clockwise direction, every other player must play a card of the same suit unless they do not have such a card. If this is the case, they can play any card. The winner of the trick is the one with the highest ranking card (ranking explained in 3).
+
+3. Each trick consists of 4 cards, the winner of which is the one with the highest ranking card. Ranks go firstly by suit. In the case of a trump bid, trump suit > first-card suit > other two suits. For a no trump bid, first-card suit > all other suits. For cards of the same suit, the ranking is determined by the value, with the order being 2 > 3 > ... > K > A. Winner of the trick starts the next trick.
+
+4. When a player not going first runs out of cards of the base suit, they can play cards from any of the other suits. If they play a card of the trump suit and this occurs for the first time in the game, then the trump is "broken" and plays can now start tricks with the trump suit.
+
+5. The game continues until a pair of players have obtained the necessary number of tricks, or optionally all 13 rounds have been played where one of the pairs will have obtained the required number.

@@ -3,12 +3,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class HelpManager {
 
+    private static final String MAIN_COMMAND_IDENTIFIER = "!M";
+
     private HashMap<String, String> textMap;
     private HashMap<String, String> descriptions;
+    private HashSet<String> mainCommands;
     private String defaultHelpText;
     private String processedString;
 
@@ -16,6 +20,7 @@ public class HelpManager {
         textMap = new HashMap<>();
         descriptions = new HashMap<>();
         processedString = "Not processed!";
+        mainCommands = new HashSet<>();
     }
 
     private void setText(String commandName, String text) {
@@ -28,6 +33,10 @@ public class HelpManager {
 
     private void setHelpText(String text) {
         this.defaultHelpText = text;
+    }
+
+    private void addMainCommand(String command) {
+        this.mainCommands.add(command);
     }
 
     public static HelpManager init() {
@@ -55,6 +64,10 @@ public class HelpManager {
                     helpManager.setHelpText(helpText.toString());
                 } else {
                     String description = reader.readLine();
+                    if (description.startsWith(MAIN_COMMAND_IDENTIFIER)) {
+                        description = description.substring(2);
+                        helpManager.addMainCommand(commandName);
+                    }
                     StringBuilder remainingText = new StringBuilder();
                     String line = reader.readLine();
                     while (line != null) {
@@ -80,8 +93,8 @@ public class HelpManager {
         StringBuilder tempString = new StringBuilder();
         tempString.append(defaultHelpText);
         tempString.append("\n");
-        for (Map.Entry<String, String> entries : descriptions.entrySet()) {
-            tempString.append("\n/" + entries.getKey() + " - " + entries.getValue());
+        for (String commandName : mainCommands) {
+            tempString.append("\n/" + commandName + " - " + descriptions.get(commandName));
         }
         processedString = tempString.toString();
 
