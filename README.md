@@ -20,11 +20,12 @@ Link to replay system repository: https://github.com/fyshhh/BridgeBot
  1. Add the bot @O\_Bridge\_Bot to your Telegram group of choice
  2. All users who are interested to play will have to enable the bot by going to @O\_Bridge\_Bot and sending the bot the message "/start"
  3. Create a game by using the command "/creategame@O\_Bridge\_Bot" in a group chat
- 4. Users can join with the command "/joingame@O\_Bridge\_Bot" or clicking the "Join Game" button
- 5. Once four players have joined, the game can be started with the command "/startgame@O\_Bridge\_Bot" or by clicking the "Start Game" button
+ 4. For creating practice games, instead us the command "/createpracticegame@O_Bridge_Bot" and then select one of the three modes
+ 5. Users can join with the command "/joingame@O\_Bridge\_Bot" or clicking the "Join Game" button
+ 6. Once four players have joined, will automatically start 
  
 #### 2.2. Playing the game
- 1. On game start: Players will be sent their hand in the form of 13 Telegram buttons in a 3 x 5 grid via private messaging<br/>
+ 1. On game start: Players will be sent their hand with via private messaging<br/>
  ![sample player hand](/images/player_hands.png)
  2. Bidding process: A random player will be chosen to start the bidding. A request will be sent via private messaging to players when it is their turn to bid. 
  The bot will send players an array of buttons with the next five (or fewer if the bid is high) larger bids and a "Pass" option. Players can also create their own bid based on the format specified by the request.
@@ -39,7 +40,7 @@ Link to replay system repository: https://github.com/fyshhh/BridgeBot
  ![sample_game_feed](/images/sample_game_feed.jpg)
  6. Ending the game: Once either pairs of players have reached the required number of tricks, the game terminates, announcing the winners.
  Two buttons will be sent:
-    1. "Create a new game"
+    1. "Start a new game": Immediately starts a new game in the same game mode with the same players
     2. "View the replay": This opens a link to a page where users are able to view a replay of the game that just concluded
     
 #### 2.3. Other features and commands:
@@ -47,14 +48,13 @@ Link to replay system repository: https://github.com/fyshhh/BridgeBot
     - Only usable in a group chat
     - Group adminstrators that use the command will be able to cancel the game immediately
     - Only current players will be able to vote to end the game. 2 votes (out of 4) are required to cancel the game
- - "/help": Used for requesting help from the bot (Work-in-progress)
+ - "/help": Used for requesting help from the bot 
  - "/leavegame": For players to leave a game during the joining phase
  - "/resend": The bot resends the current game feed (for group chats) or player hand (for private chats)
     - This command is mainly used for reducing the amount of scrolling that users need to do to view the game feed
     
 #### 2.4. Miscellaneous bot features
- - The bot has a default timer of 90s before the game automatically cancels due to inactivity
-    - (To be implemented) Users will be able to set the amount of time given for each turn
+ - The bot has a default timer of 300s before the game automatically cancels due to inactivity
     
 ## 3. Program Structure
 #### 3.1. Overall program structure
@@ -227,8 +227,6 @@ In this section, we will be going through how some of the more important systems
 - `leavegame`: Removes the ID of the user from the current GameChatID object
     - Checks that the user is in the current game
     - Checks that the game has not already started
-- `startgame`: Initiates the game by passing the GameChatId object to the mediator
-    - Checks that the current GameChatId has four players
 - `cancelgame`: Cancels the game that is currently running
     - Checks whether the user is an adminstrator of the group, if they are, the game is cancelled
     - Otherwise, check that the player is in the game. Only players in-game can vote
@@ -238,7 +236,7 @@ In this section, we will be going through how some of the more important systems
 #### 4.2. Registering user response
 Here, we look at an instance of how we obtain user response. The main idea is that when the `TelegramPlayer`'s `getNextBid(..)` is called, 
 the class signals that it is waiting for a response by setting `boolean awaitingBidResponse = true`. It then creates a new thread
-and waits for 90 seconds. If during these 90 seconds, the appropriate user sends an appropriate response, then the response is saved, 
+and waits for 300 seconds. If during these 300 seconds, the appropriate user sends an appropriate response, then the response is saved, 
 the thread is interrupted and the response is returned
 
 ##### 4.2.1. Overall flow example (Requesting a card to be played)
