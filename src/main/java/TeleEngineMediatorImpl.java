@@ -95,9 +95,9 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
             if (gameEngine.biddingInProgress()) {
                 Bid newBid = getPlayer(chatId, currentPlayer).getBid();
                 if (newBid == null) {
-                    cancelGame(chatId);
-                    if (this.gameEngines.containsKey(chatId)) {
+                    if (this.gameEngines.get(chatId) == gameEngine) {
                         ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                        cancelGame(chatId);
                     }
                     return;
                 }
@@ -116,10 +116,10 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
                             gameEngine.getTrumpSuit());
                 }
                 if (card == null) {
-                    if (this.gameEngines.containsKey(chatId)) {
+                    if (this.gameEngines.get(chatId) == gameEngine) {
                         ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                        cancelGame(chatId);
                     }
-                    cancelGame(chatId);
                     return;
                 }
 
