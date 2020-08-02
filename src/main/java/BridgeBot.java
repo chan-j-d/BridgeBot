@@ -82,7 +82,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
 
         if (update.hasCallbackQuery()) {
 
-            boolean groupChat = update.getCallbackQuery().getMessage().isGroupMessage();
+            boolean groupChat = update.getCallbackQuery().getMessage().isGroupMessage() ||
+                    update.getCallbackQuery().getMessage().isSuperGroupMessage();
             CallbackQuery query = update.getCallbackQuery();
 
             if (groupChat) {
@@ -542,8 +543,12 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 return;
             }
 
+            System.out.println(startGameMessageId.get(chatId).second);
+
             String stringToEdit = startGameMessageId.get(chatId).second
-                    .replaceFirst("\n - " + firstName, "");
+                    .replaceFirst("\n - \\*" + firstName + "\\*", "");
+
+            System.out.println(stringToEdit);
 
             gameChatIds.removePlayerId(userId);
             userIds.remove(userId);
@@ -553,7 +558,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             EditMessageText edit = new EditMessageText()
                     .setChatId(chatId)
                     .setMessageId(messageId)
-                    .setText(stringToEdit);
+                    .setText(stringToEdit)
+                    .enableMarkdown(true);
 
             startGameMessageId.get(chatId).second = stringToEdit;
 
@@ -623,7 +629,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     private void helpRequest(Update update) {
-        boolean groupMessage = update.getMessage().isGroupMessage();
+        boolean groupMessage = update.getMessage().isGroupMessage() || update.getMessage().isSuperGroupMessage();
         long sendId;
         if (groupMessage) {
             sendId = (long) update.getMessage().getFrom().getId();
