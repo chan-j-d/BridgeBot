@@ -58,6 +58,10 @@ public class GameChatIds {
         return names[index - 1];
     }
 
+    public int getNumPlayers() {
+        return numPlayers;
+    }
+
     public void removePlayerId(long gameChatId) {
         long[] newChatIds = new long[numPlayers + 1];
         String[] newNames = new String[numPlayers];

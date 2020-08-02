@@ -411,10 +411,10 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else if (!groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "No game running!");
 
-            /* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
+            ///* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
         } else if (mediator.containsUserId(userId) || userIds.contains(userId)) {
             sendMessageToId(userId, "You are already in a game!");
-            */
+            //*/
 
         } else if ((gameChatIds = groupChatIds.get(chatId)).checkFull()) {
             sendMessageToId(chatId, "Game is full!");
@@ -543,12 +543,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 return;
             }
 
-            System.out.println(startGameMessageId.get(chatId).second);
-
             String stringToEdit = startGameMessageId.get(chatId).second
                     .replaceFirst("\n - \\*" + firstName + "\\*", "");
-
-            System.out.println(stringToEdit);
 
             gameChatIds.removePlayerId(userId);
             userIds.remove(userId);
@@ -580,7 +576,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         long chatId = update.getMessage().getChatId();
 
         if (groupChatIds.containsKey(chatId)) {
-            groupChatIds.remove(chatId);
+            GameChatIds gameChatIds = groupChatIds.remove(chatId);
+            for (int i = 1; i <= gameChatIds.getNumPlayers(); i++) {
+                long playerId = gameChatIds.getChatId(i);
+                userIds.remove(playerId);
+            }
             startGameMessageId.remove(chatId);
             groupNames.remove(chatId);
             sendMessageToId(chatId, "Game cancelled!");
@@ -676,7 +676,6 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     public int sendMessageToId(long chatId, String text, String style) {
-        System.out.println(text);
         SendMessage message = new SendMessage()
                 .setChatId(chatId)
                 .setText(text);
