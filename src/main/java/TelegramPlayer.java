@@ -4,6 +4,7 @@ public class TelegramPlayer extends Player {
 
     private boolean awaitingBidResponse;
     private boolean awaitingCardResponse;
+    private boolean awaitingStringResponse;
     private String response;
     private boolean updated;
 
@@ -24,6 +25,20 @@ public class TelegramPlayer extends Player {
             return null;
         }
 
+    }
+
+    public synchronized String getStringResponse() {
+        awaitingStringResponse = true;
+        updated = false;
+        try {
+            wait(WAIT_TIME);
+        } catch (InterruptedException e) {
+        }
+        if (updated) {
+            return response;
+        } else {
+            return null;
+        }
     }
 
     public synchronized Card getPartnerCard() {
@@ -77,6 +92,11 @@ public class TelegramPlayer extends Player {
         } else if (awaitingCardResponse && Card.isValidCardString(response)) {
             this.response = response;
             awaitingCardResponse = false;
+            updated = true;
+            notifyAll();
+        } else if (awaitingStringResponse) {
+            this.response = response;
+            awaitingStringResponse = false;
             updated = true;
             notifyAll();
         }

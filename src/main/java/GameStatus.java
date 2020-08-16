@@ -1,0 +1,6 @@
+public enum GameStatus {
+
+    COMMUNICATING, BIDDING, PARTNER, FIRST_CARD, OTHER_CARDS, END;
+
+
+}

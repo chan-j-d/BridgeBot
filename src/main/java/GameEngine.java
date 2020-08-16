@@ -94,17 +94,18 @@ public class GameEngine implements Engine {
         logger.addHands(hands);
     }
 
-    public GameUpdate startBid() {
-        GameUpdate update = bidCoordinator.startBid();
-        int firstPlayer = update.get(0).getIndex();
-        update.add(0, IndexUpdateGenerator
-                .createPlayerHandInitialUpdate(firstPlayer, players[firstPlayer].getHand()));
+    public GameUpdate startGame() {
+        GameUpdate update = new GameUpdate();
         for (int i = 1; i < 5; i++) {
-            if (i == firstPlayer) continue;
             update.add(IndexUpdateGenerator.createPlayerHandInitialUpdate(i, players[i].getHand()));
         }
-
         update.add(IndexUpdateGenerator.createGameStartNotice());
+        logger.addUpdate(update);
+        return update;
+    }
+
+    public GameUpdate startBid() {
+        GameUpdate update = bidCoordinator.startBid();
 
         logger.addUpdate(update);
         return update;
@@ -344,6 +345,23 @@ public class GameEngine implements Engine {
         }
 
         return trickCount;
+    }
+
+    public GameStatus getGameStatus() {
+        if (gameInProgress()) {
+            if (biddingInProgress()) return GameStatus.BIDDING;
+            else if (gettingPartnerCard()) return GameStatus.PARTNER;
+            else if (firstCardOfTrick()) return GameStatus.FIRST_CARD;
+            else return GameStatus.OTHER_CARDS;
+        } else return GameStatus.END;
+    }
+
+    public boolean expectingResponse(int player) {
+        return false;
+    }
+
+    public GameUpdate processResponse(int player, String response) {
+        return null;
     }
 
     private class Partners {

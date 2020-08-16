@@ -13,6 +13,10 @@ public class TestPlayer extends Player {
         return Bid.createBid(bid);
     }
 
+    String getStringResponse() {
+        return s.next();
+    }
+
     Card getPartnerCard() {
         Deck newDeck = Deck.init();
         Card partnerCard = newDeck.draw();
