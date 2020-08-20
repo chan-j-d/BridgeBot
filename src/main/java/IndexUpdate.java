@@ -26,6 +26,10 @@ public class IndexUpdate {
         return this.message;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
     public UpdateType getUpdateType() {
         return this.updateType;
     }

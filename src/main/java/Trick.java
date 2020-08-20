@@ -55,6 +55,14 @@ public class Trick {
         }
     }
 
+    public boolean checkContains(Card card) {
+        for (int i = 1; i <= 4; i++) {
+            Card trickCard = trick[i];
+            if (trickCard.equals(card)) return true;
+        }
+        return false;
+    }
+
     private int countCardsPlayed() {
         return Arrays.stream(played).sum();
     }

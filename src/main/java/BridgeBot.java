@@ -46,6 +46,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     private static final String OPEN_HAND_CALLBACK_DATA = "openhandgame";
     private static final String CARDS_PLAYED_CALLBACK_DATA = "cardsplayedgame";
     private static final String SUIT_PLAYED_CALLBACK_DATA = "suitsplayedgame";
+    private static final String TUTORIAL_CALLBACK_DATA = "tutorial";
 
 
 
@@ -148,6 +149,9 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 break;
             case SUIT_PLAYED_CALLBACK_DATA:
                 registerNewJoinGameWindow(update, SUITS_PLAYED);
+                break;
+            case TUTORIAL_CALLBACK_DATA:
+                registerNewJoinGameWindow(update, TUTORIAL);
                 break;
         }
 
@@ -376,11 +380,16 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                         .setText("3. Shows the number of cards of each suit played")
                         .setCallbackData(SUIT_PLAYED_CALLBACK_DATA);
 
+                InlineKeyboardButton tutorialButton = new InlineKeyboardButton()
+                        .setText("4. Tutorial mode (beta)")
+                        .setCallbackData(TUTORIAL_CALLBACK_DATA);
+
                 InlineKeyboardMarkup markup = new InlineKeyboardMarkup()
                         .setKeyboard(List.of(
                                 List.of(openHandButton),
                                 List.of(cardsPlayedButton),
-                                List.of(suitsPlayedButton)
+                                List.of(suitsPlayedButton),
+                                List.of(tutorialButton)
                         ));
 
                 SendMessage sendMessage = new SendMessage()
@@ -428,10 +437,10 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
         } else if (!groupChatIds.containsKey(chatId)) {
             sendMessageToId(chatId, "No game running!");
 
-            /* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
+            ///* **DISABLED FOR NOW DUE TO THE NEED TO BE ABLE TO JOIN THE SAME GAME MULTIPLE TIMES FOOR TESTING**
         } else if (mediator.containsUserId(userId) || userIds.contains(userId)) {
             sendMessageToId(userId, "You are already in a game!");
-            */
+            //*/
 
         } else if ((gameChatIds = groupChatIds.get(chatId)).checkFull()) {
             sendMessageToId(chatId, "Game is full!");

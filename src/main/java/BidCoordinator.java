@@ -146,6 +146,10 @@ public class BidCoordinator {
         return this.firstPlayer;
     }
 
+    public int getCurrentPlayer() {
+        return this.currentPlayer;
+    }
+
     private int nextPlayerIndex(int currentPlayerIndex) {
         return currentPlayerIndex == 4 ? 1 : currentPlayerIndex + 1;
     }

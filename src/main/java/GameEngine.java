@@ -394,9 +394,7 @@ public class GameEngine implements Engine {
         }
 
         public String toString() {
-            return player1 + ": " + players[player1].countTricks() + " numTricks\n" +
-                    player2 + ": " + players[player2].countTricks() +
-                    " numTricks\nTotal required: " + this.requiredNumber;
+            return "P" + player1 + " and P" + player2;
         }
 
     }
