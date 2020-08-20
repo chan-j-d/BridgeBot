@@ -23,7 +23,7 @@ public class OpenHandEngine extends GameEngine {
         return update;
     }
 
-    private IndexUpdate createOtherHandsUpdate(int player) {
+    protected IndexUpdate createOtherHandsUpdate(int player) {
         StringBuilder finalString = new StringBuilder();
         finalString.append("*Other player hands*: ");
 

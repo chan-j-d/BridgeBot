@@ -17,6 +17,7 @@ public abstract class Player {
     abstract Card getPartnerCard();
     abstract Card getFirstCard(boolean trumpBroken, char trumpSuit);
     abstract Card getNextCard(char firstSuit, char trumpSuit);
+    abstract String getStringResponse();
 
     public void registerResponse(String response) {};
 }

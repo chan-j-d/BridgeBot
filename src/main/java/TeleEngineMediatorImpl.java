@@ -7,6 +7,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
     private static final int OPEN_HAND = 1;
     private static final int CARDS_PLAYED = 2;
     private static final int SUITS_PLAYED = 3;
+    private static final int TUTORIAL = 4;
 
     private HashMap<Long, ArrayList<ViewerInterface>> listViewerInterfaces;
     private HashMap<Long, GameEngine> gameEngines;
@@ -64,7 +65,9 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
         gameEngines.put(groupId, gameEngine);
 
-        CompletableFuture.runAsync(() -> runGame(groupId));
+        CompletableFuture<GameEngine> future = CompletableFuture.supplyAsync(() -> runGame(groupId));
+        future.thenAccept(engine -> processGameEnd(engine));
+
     }
 
     private GameEngine gameEngineSelector(long groupId, int gameType) {
@@ -77,65 +80,136 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
                 return new CardPlayedEngine(groupId);
             case (SUITS_PLAYED):
                 return new SuitPlayedEngine(groupId);
+            case (TUTORIAL):
+                return new TutorialEngine(groupId);
             default:
                 throw new IllegalArgumentException("No such gameType!");
         }
     }
 
-    private void runGame(long chatId) {
+    private GameEngine runGame(long chatId) {
         GameEngine gameEngine = gameEngines.get(chatId);
 
-        GameUpdate currentUpdate = gameEngine.startBid();
+        GameUpdate currentUpdate = gameEngine.startGame();
         broadcastUpdateFromEngine(gameEngine, currentUpdate);
 
-        int currentPlayer = currentUpdate.get(0)
-                .getIndex();
+        int currentPlayer = 0;
 
-        while (gameEngine.gameInProgress()) {
-            if (gameEngine.biddingInProgress()) {
-                Bid newBid = getPlayer(chatId, currentPlayer).getBid();
-                if (newBid == null) {
-                    if (this.gameEngines.get(chatId) == gameEngine) {
-                        ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
-                        cancelGame(chatId);
+        GameStatus currentStatus = gameEngine.getGameStatus();
+
+        while (!currentStatus.equals(GameStatus.END)) {
+
+            Card card;
+
+            switch (currentStatus) {
+
+                case COMMUNICATING:
+                    CompletableFuture<Boolean> future1 = CompletableFuture.supplyAsync(
+                            () -> queryResponseFromUser(gameEngine, chatId, 1));
+                    CompletableFuture<Boolean> future2 = CompletableFuture.supplyAsync(
+                            () -> queryResponseFromUser(gameEngine, chatId, 2));
+                    CompletableFuture<Boolean> future3 = CompletableFuture.supplyAsync(
+                            () -> queryResponseFromUser(gameEngine, chatId, 3));
+                    CompletableFuture<Boolean> future4 = CompletableFuture.supplyAsync(
+                            () -> queryResponseFromUser(gameEngine, chatId, 4));
+                    CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
+                            future1, future2, future3, future4);
+                    combinedFuture.join();
+
+                    if (!(future1.join() && future2.join() && future3.join() && future4.join())) {
+                        if (this.gameEngines.get(chatId) == gameEngine) {
+                            ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                            cancelGame(chatId);
+                        }
+                        return null;
                     }
-                    return;
-                }
-                currentUpdate = gameEngine.processPlay(newBid);
-            } else {
-                Card card;
-                if (gameEngine.gettingPartnerCard()) {
+
+                    currentUpdate = gameEngine.startBid();
+                    broadcastUpdateFromEngine(gameEngine, currentUpdate);
+                    currentPlayer = currentUpdate.get(0).getIndex();
+                    currentStatus = gameEngine.getGameStatus();
+                    continue;
+
+                case BIDDING:
+                    Bid newBid = getPlayer(chatId, currentPlayer).getBid();
+                    if (newBid == null) {
+                        if (this.gameEngines.get(chatId) == gameEngine) {
+                            ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                            cancelGame(chatId);
+                        }
+                        return null;
+                    }
+                    currentUpdate = gameEngine.processPlay(newBid);
+                    break;
+
+                case PARTNER:
                     card = getPlayer(chatId, currentPlayer).getPartnerCard();
-                } else if (gameEngine.firstCardOfTrick()) {
+                    if (card == null) {
+                        if (this.gameEngines.get(chatId) == gameEngine) {
+                            ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                            cancelGame(chatId);
+                        }
+                        return null;
+                    }
+                    currentUpdate = gameEngine.processPlay(card);
+                    break;
+
+                case FIRST_CARD:
                     card = getPlayer(chatId, currentPlayer).getFirstCard(
                             gameEngine.getTrumpBroken(),
                             gameEngine.getTrumpSuit());
-                } else {
+                    if (card == null) {
+                        if (this.gameEngines.get(chatId) == gameEngine) {
+                            ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                            cancelGame(chatId);
+                        }
+                        return null;
+                    }
+                    currentUpdate = gameEngine.processPlay(card);
+                    break;
+
+                case OTHER_CARDS:
                     card = getPlayer(chatId, currentPlayer).getNextCard(
                             gameEngine.getFirstCardSuit(),
                             gameEngine.getTrumpSuit());
-                }
-                if (card == null) {
-                    if (this.gameEngines.get(chatId) == gameEngine) {
-                        ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
-                        cancelGame(chatId);
+                    if (card == null) {
+                        if (this.gameEngines.get(chatId) == gameEngine) {
+                            ioInterface.sendMessageToId(chatId, "Game cancelled due to inactivity!");
+                            cancelGame(chatId);
+                        }
+                        return null;
                     }
-                    return;
-                }
+                    currentUpdate = gameEngine.processPlay(card);
+                break;
 
-                currentUpdate = gameEngine.processPlay(card);
             }
+            currentStatus = gameEngine.getGameStatus();
+
             currentPlayer = currentUpdate.get(0).getIndex();
             broadcastUpdateFromEngine(gameEngine, currentUpdate);
         }
 
-        logsManager.updateLogs(gameEngine.getGameLogger());
+        return gameEngine;
 
-        System.out.println(new GameHashImpl1().hashGame(gameEngine.getGameLogger().getGameReplay()));
+    }
 
-        ioInterface.registerGameEnded(gameEngine.getGameLogger());
+    private boolean queryResponseFromUser(GameEngine engine, long chatId, int player) {
+        while (engine.expectingResponse(player)) {
+            String response = getPlayer(chatId, player).getStringResponse();
+            if (response == null) {
+                return false;
+            }
+            broadcastUpdateFromEngine(engine, engine.processResponse(player, response));
+        }
+        return true;
+    }
 
-        removeGame(chatId);
+    private void processGameEnd(GameEngine engine) {
+        if (engine == null) return;
+        logsManager.updateLogs(engine.getGameLogger());
+        System.out.println(new GameHashImpl1().hashGame(engine.getGameLogger().getGameReplay()));
+        ioInterface.registerGameEnded(engine.getGameLogger());
+        removeGame(engine.getChatId());
     }
 
     public boolean containsUserId(long id) {
@@ -241,7 +315,7 @@ public class TeleEngineMediatorImpl implements ClientEngineMediator {
 
     private void testGameIds() {
         long groupId = 0L;
-        GameEngine gameEngine = new CardPlayedEngine(groupId);
+        GameEngine gameEngine = new TutorialEngine(groupId);
 
         ArrayList<ViewerInterface> list = new ArrayList<>();
 

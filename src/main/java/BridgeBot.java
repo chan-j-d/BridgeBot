@@ -42,9 +42,11 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     private static final int OPEN_HAND = 1;
     private static final int CARDS_PLAYED = 2;
     private static final int SUITS_PLAYED = 3;
+    private static final int TUTORIAL = 4;
     private static final String OPEN_HAND_CALLBACK_DATA = "openhandgame";
     private static final String CARDS_PLAYED_CALLBACK_DATA = "cardsplayedgame";
     private static final String SUIT_PLAYED_CALLBACK_DATA = "suitsplayedgame";
+    private static final String TUTORIAL_CALLBACK_DATA = "tutorial";
 
 
 
@@ -65,7 +67,9 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             "cancelgame",
             "help",
             "leavegame",
-            "resend");
+            "resend",
+            "skip",
+            "next");
 
     /*
     Required method by the Telegram package. Only recognise bot commands in group chats and private messages.
@@ -146,6 +150,9 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             case SUIT_PLAYED_CALLBACK_DATA:
                 registerNewJoinGameWindow(update, SUITS_PLAYED);
                 break;
+            case TUTORIAL_CALLBACK_DATA:
+                registerNewJoinGameWindow(update, TUTORIAL);
+                break;
         }
 
     }
@@ -164,6 +171,12 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                     break;
                 case "resend":
                     mediator.resend(chatId);
+                    break;
+                case "next":
+                    mediator.registerResponse(chatId, TutorialEngine.NEXT_STRING);
+                    break;
+                case "skip":
+                    mediator.registerResponse(chatId, TutorialEngine.SKIP_STRING);
                     break;
                 default:
                     sendMessageToId(chatId, "Command only valid in a group chat!");
@@ -217,7 +230,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             long chatId = update.hasMessage() ? update.getMessage().getChatId() :
                     update.getCallbackQuery().getMessage().getChatId();
             GameChatIds gameChatIds = new GameChatIds(4);
-            gameChatIds.setGameType(NORMAL_GAME);
+            gameChatIds.setGameType(TUTORIAL);
             gameChatIds.addChatId(chatId);
             for (int i = 0; i < 4; i++) {
                 User user = update.getMessage().getFrom();
@@ -258,12 +271,15 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             //Assigns the group chat Id with a name
             groupNames.put(chatId, groupName);
 
+            System.out.println("reached here 1");
+
             //Creates the gameChatId object to store the game Ids
             GameChatIds gameChatIds = new GameChatIds(4);
             gameChatIds.setGameType(gameType);
             gameChatIds.addChatId(chatId);
             groupChatIds.put(chatId, gameChatIds);
             String stringToSend = createStartGameString(gameType);
+            System.out.println("reached here 2");
 
             SendMessage sendMessage = new SendMessage()
                     .setChatId(chatId)
@@ -274,6 +290,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             InlineKeyboardMarkup buttonMarkup = createJoinButtonMarkup();
 
             sendMessage.setReplyMarkup(buttonMarkup);
+            System.out.println("reached here 3");
 
             try {
                 Message message = execute(sendMessage);
@@ -283,6 +300,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
+            System.out.println("reached here 4");
 
         }
 
@@ -304,6 +322,8 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                 return "Cards-played";
             case SUITS_PLAYED:
                 return "Suits-played";
+            case TUTORIAL:
+                return "Tutorial";
             default:
                 throw new IllegalArgumentException("Invalid integer gametype");
         }
@@ -340,6 +360,7 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
             String[] split = update.getMessage().getText().split(getBotUsername());
             if (split.length == 2) {
                 int gameType = split[1].charAt(1) - 48;
+                System.out.println("reached here:" + gameType);
                 registerNewJoinGameWindow(chatId, groupName, gameType);
             } else {
 
@@ -359,11 +380,16 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
                         .setText("3. Shows the number of cards of each suit played")
                         .setCallbackData(SUIT_PLAYED_CALLBACK_DATA);
 
+                InlineKeyboardButton tutorialButton = new InlineKeyboardButton()
+                        .setText("4. Tutorial mode (beta)")
+                        .setCallbackData(TUTORIAL_CALLBACK_DATA);
+
                 InlineKeyboardMarkup markup = new InlineKeyboardMarkup()
                         .setKeyboard(List.of(
                                 List.of(openHandButton),
                                 List.of(cardsPlayedButton),
-                                List.of(suitsPlayedButton)
+                                List.of(suitsPlayedButton),
+                                List.of(tutorialButton)
                         ));
 
                 SendMessage sendMessage = new SendMessage()
@@ -864,12 +890,13 @@ public class BridgeBot extends TelegramLongPollingBot implements IOInterface {
     }
 
     public String getBotUsername() {
-        return "O_Bridge_Bot";
+        return "O_Bridge_Test_Bot";
     }
 
     public String getBotToken() {
         return "";
     }
+
 
 
 }

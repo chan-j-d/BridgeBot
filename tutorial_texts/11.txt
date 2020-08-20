@@ -1,0 +1,3 @@
+Welcome to the basic tutorial mode. If you are familiar with the game, you can use the /skip command to skip through all the tutorial messages. Otherwise, please use the /next command to progress the tutorial.
+/next - next tutorial message
+/skip - skip the tutorial

@@ -1,0 +1,14 @@
+To see why the bidding matters, let us look at a few tricks. The highest priority card in a trick wins. 
+Trump suit bids: trump suit > first card's suit > other suits, A > K > Q > ... > 2
+No trump bids: first card's suit > other suits, A > K > Q > ... > 2
+
+When a player starts a trick, say they play a ♠ card. All other players must also play the same suit unless they do not have any such cards, then they are free to play cards of any other suit.
+
+{♠A, ♠10, ♠7, ♠2} - most tricks will look like this. ♠A will win regardless of the bid!
+
+However, if we have a trick like this:
+
+{♠A (first card), ♠10, ♥7, ♠2} - then if the trump suit is ♥, ♥7 > ♠A and the player who played ♥7 will win the trick. If however, the trump is any other suit or a no trump bid, then ♥7 will be lower in priority.
+
+/next
+/skip

@@ -1,0 +1,5 @@
+A game of floating bridge consists of the bidding phase and the trick-taking phase. The bidding phase determines the trump suit and the number of tricks each team has to win. 
+
+The bid winner then chooses a card. The player with the card becomes the bid winner's partner and the remaining two players form the second team.
+/next
+/skip
