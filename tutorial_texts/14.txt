@@ -1,0 +1,7 @@
+One has to consider the strength of each of their suit in their hands when considering what bid to make. Besides that, bids also have a number, X. The winner of the bid 
+has to win X + 6 tricks whereas the other pair only has to win 8 - X suits. The larger the bid, the greater the number of tricks the winner of the bid has to win. 
+
+Let us begin the game proper and we will guide you through each step of the game!
+
+/next
+/skip
